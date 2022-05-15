@@ -1,8 +1,8 @@
-- [] Implementar a base do TAD.
-- [] Implementar o tipo do grafo passado por argumentos da linha de comando ( direcionado ou não direcionado )
-- [] Implementar arestas ponderadas ou não
-- [] Implementar pesos nas arestas
-- [] Receber arquivo de entrada
-- [] Cuspir o grafo no arquivo de saída
-- [] Verificar se o grafo pode ser lido pelo software Graphviz
-- [] Verificar todos os pontos referentes ao trabalho
+- [ ] Implementar a base do TAD.
+- [ ] Implementar o tipo do grafo passado por argumentos da linha de comando ( direcionado ou não direcionado )
+- [ ] Implementar arestas ponderadas ou não
+- [ ] Implementar pesos nas arestas
+- [ ] Receber arquivo de entrada
+- [ ] Cuspir o grafo no arquivo de saída
+- [ ] Verificar se o grafo pode ser lido pelo software Graphviz
+- [ ] Verificar todos os pontos referentes ao trabalho
