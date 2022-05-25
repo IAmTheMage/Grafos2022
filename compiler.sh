@@ -1,2 +1,4 @@
-g++ src/main.cpp src/Node.cpp -o main -fpermissive
-./main
+cmake -B build 
+cd build
+make
+ctest

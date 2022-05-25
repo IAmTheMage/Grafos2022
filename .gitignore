@@ -1,1 +1,4 @@
-*.sh
+compiler.sh
+.vscode
+**/CMakeCache.txt
+build
