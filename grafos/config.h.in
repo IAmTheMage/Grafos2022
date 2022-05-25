@@ -1,0 +1,2 @@
+#cmakedefine INPUT_DIR "@INPUT_DIR@"
+#cmakedefine EXPECTED_OUTPUT_DIR "@EXPECTED_OUTPUT_DIR@"

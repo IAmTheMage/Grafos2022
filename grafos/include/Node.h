@@ -9,6 +9,7 @@ namespace Graph {
       Node();
       ~Node();
       static Node* make() {
+        std::cout << std::endl;
         return new Node();
       }
       int getNumberOfNodes();
