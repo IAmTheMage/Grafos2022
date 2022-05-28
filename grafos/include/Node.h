@@ -8,19 +8,27 @@ namespace Graph {
     public:
       Node();
       ~Node();
-      static Node* make() {
-        std::cout << std::endl;
-        return new Node();
+      unsigned int id;
+      static Node* make(unsigned int id) {
+        Node* n = new Node();
+        n->id = id;
+        return n;
       }
       int getNumberOfNodes();
       Node* getLastBeforeNull();
       Node* getNext();
-      void instanceNew() {
-        this->next = make();
+      void instanceNew(unsigned int id) {
+        this->next = make(id);
+      }
+      void makeRelationship(unsigned int id, int weight);
+      int getEdgeCount() {
+        return this->edgeCount;
       }
     private:
       Node* next;
       Edge* edge;
+      int edgeCount = 0;
+      Edge* getLastEdgeBeforeNull();
   };
 
   class WeightedNode {

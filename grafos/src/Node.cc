@@ -33,4 +33,25 @@ namespace Graph {
   Node* Node::getNext() {
     return this->next;
   }
+
+  Edge* Node::getLastEdgeBeforeNull() {
+    Edge* t = edge;
+    Edge* p = NULL;
+    while(t != NULL) {
+      p = t;
+      t = t->getNext();
+    }
+    return p;
+  }
+
+  void Node::makeRelationship(unsigned int to, int weight = 0) {
+    if(edgeCount == 0) {
+      this->edge = new Edge(this->id, to, weight);
+    }
+    else {
+      Edge* last = getLastEdgeBeforeNull();
+      last = new Edge(this->id, to, weight);
+    }
+    edgeCount++;
+  }
 }

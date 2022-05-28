@@ -14,6 +14,16 @@ add_subdirectory(grafos)
 add_subdirectory(tests)
 
 add_test(
-  NAME  Test1
-  COMMAND $<TARGET_FILE:test1>
+  NAME  CountNumberOfNodes
+  COMMAND $<TARGET_FILE:test1> in.txt out.txt 1 1 0
+  )
+
+add_test(
+    NAME  SearchByNode
+    COMMAND $<TARGET_FILE:test2> in.txt out.txt 1 1 0
+    )
+
+add_test(
+  NAME  CreateDirectedEdge
+  COMMAND $<TARGET_FILE:test3> in.txt out.txt 1 1 0
   )
