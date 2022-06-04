@@ -20,7 +20,7 @@ namespace Graph {
     public:
       Graph(char** args);
       ~Graph() {};
-      int countNumberOfNodes() {return this->node->getNumberOfNodes();};
+      int countNumberOfNodes() {return count;};
       void instanceNewNode() {
         if(count == 0) {
           node = Node::make(0);
@@ -31,7 +31,8 @@ namespace Graph {
         }
         count++;
       };
-      Node* searchById(unsigned int id);
+      Node* searchById(int id);
+      void directTransitiveClosure(int id);
     private:
       Node* node;
       GraphType graphType;
@@ -39,7 +40,7 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
       std::ifstream fs;
-      std::ofstream of;
+      std::fstream of;
   };
   #endif 
 }

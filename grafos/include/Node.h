@@ -8,8 +8,8 @@ namespace Graph {
     public:
       Node();
       ~Node();
-      unsigned int id;
-      static Node* make(unsigned int id) {
+      int id;
+      static Node* make(int id) {
         Node* n = new Node();
         n->id = id;
         return n;
@@ -17,10 +17,13 @@ namespace Graph {
       int getNumberOfNodes();
       Node* getLastBeforeNull();
       Node* getNext();
-      void instanceNew(unsigned int id) {
+      void instanceNew(int id) {
         this->next = make(id);
       }
-      void makeRelationship(unsigned int id, int weight);
+      Edge* getEdge() {
+        return this->edge;
+      }
+      void makeRelationship(int id, int weight);
       int getEdgeCount() {
         return this->edgeCount;
       }

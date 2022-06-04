@@ -21,7 +21,7 @@ namespace Graph {
     setFiles(in, out);
   }
 
-  Node* Graph::searchById(unsigned int id) {
+  Node* Graph::searchById(int id) {
     Node* t = this->node;
     while(t != NULL) {
       if(t->id == id) {
@@ -41,7 +41,7 @@ namespace Graph {
       for(int j = 0; j < numberOfNodes; j++) {
         this->instanceNewNode();
       }
-      std::vector<unsigned int> values;
+      std::vector<int> values;
       while(getline(ip, b)) {
         std::string s;
         std::stringstream temp(b);
@@ -50,9 +50,41 @@ namespace Graph {
             values.push_back(std::atoi(s.c_str()));
           }
           this->searchById(values[0])->makeRelationship(values[1], values[2]);
+          if(graphType == GraphType::NONDIRECTED) {
+            this->searchById(values[1])->makeRelationship(values[0], values[2]);
+          }
+          values.clear();
+        }
+        else {
+          while(getline(temp, s, ' ')) {
+            values.push_back(std::atoi(s.c_str()));
+          }
+          this->searchById(values[0])->makeRelationship(values[1], 0);
+          if(graphType == GraphType::NONDIRECTED) {
+            this->searchById(values[1])->makeRelationship(values[0], 0);
+          }
           values.clear();
         }
       }
     }
+    else {
+      std::cout << "Is close" << "\n";
+    }
+    of.open(out, std::ios::ate | std::ios::trunc | std::ios::out);
+  }
+
+  void Graph::directTransitiveClosure(int id) {
+    Node* n = searchById(id);
+    of.open("out.txt", std::fstream::out | std::fstream::app);
+    std::cout << n->getEdgeCount() << "\n";
+    Edge* s = n->getEdge();
+    int index = 0;
+    while(s != NULL) {
+      int i = s->getTo();
+      of.write((char*)"ss", 2);
+      i = i;
+      s = s->getNext();
+    }
+    of.close();
   }
 }

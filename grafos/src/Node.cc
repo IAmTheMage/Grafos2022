@@ -44,13 +44,13 @@ namespace Graph {
     return p;
   }
 
-  void Node::makeRelationship(unsigned int to, int weight = 0) {
+  void Node::makeRelationship(int to, int weight = 0) {
     if(edgeCount == 0) {
       this->edge = new Edge(this->id, to, weight);
     }
     else {
       Edge* last = getLastEdgeBeforeNull();
-      last = new Edge(this->id, to, weight);
+      last->setNext(new Edge(this->id, to, weight));
     }
     edgeCount++;
   }

@@ -15,6 +15,15 @@ namespace Graph {
       int getWeight() {
         return this->weight;
       }
+      int getFrom() {
+        return from;
+      }
+      int getTo() {
+        return to;
+      }
+      void setNext(Edge* edge) {
+        this->next = edge;
+      };
     private:
       Edge* next;
       int weight;
