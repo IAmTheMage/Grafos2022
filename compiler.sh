@@ -1,4 +1,4 @@
-cmake -B build 
-cd build
-make
+cmake -B build &&
+cd build &&
+make &&
 ctest
