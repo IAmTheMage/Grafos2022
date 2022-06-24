@@ -1,5 +1,8 @@
 #include "../include/Graph.h" 
 #include "string.h"
+#include "vector"
+#include "algorithm"
+#include "config.h"
 
 namespace Graph {
   Graph::Graph(char** args) {
@@ -23,17 +26,21 @@ namespace Graph {
 
   Node* Graph::searchById(int id) {
     Node* t = this->node;
+    Node* p = nullptr;
     while(t != NULL) {
       if(t->id == id) {
+        p = t;
         break;
       }
       t = t->getNext();
     }
-    return t;
+    return p;
   }
 
   void Graph::setFiles(std::string in, std::string out) {
-    std::fstream ip(in, std::ios::in);
+    std::string path(ROOT_DIR);
+    path.append(in);
+    std::fstream ip(path, std::ios::in);
     if(ip.is_open()) {
       std::string b;
       std::getline(ip, b);
@@ -70,21 +77,61 @@ namespace Graph {
     else {
       std::cout << "Is close" << "\n";
     }
-    of.open(out, std::ios::ate | std::ios::trunc | std::ios::out);
   }
 
   void Graph::directTransitiveClosure(int id) {
+    Utils::Dot* dot = new Utils::Dot();
     Node* n = searchById(id);
-    of.open("out.txt", std::fstream::out | std::fstream::app);
-    std::cout << n->getEdgeCount() << "\n";
+    std::string path(ROOT_DIR);
+    std::cout << path << "\n";
+    path.append("out.dot");
+    std::cout << path << "\n";
+    std::fstream of;
+    of.open(path, std::ios::trunc | std::ios::out);
+    if(!of.is_open()) {
+      std::cout << "NOT OPEN" << "\n";
+    }
     Edge* s = n->getEdge();
     int index = 0;
-    while(s != NULL) {
-      int i = s->getTo();
-      of.write((char*)"ss", 2);
-      i = i;
+    std::vector<int> closure;
+    while(s != nullptr) {
+      int to = s->getTo();
+      if(!(std::find(closure.begin(), closure.end(), to) != closure.end())) {
+        closure.push_back(to);
+      }
+      for(auto i : getAllNodesConnected(to)) {
+        if(!(std::find(closure.begin(), closure.end(), i) != closure.end())) {
+          closure.push_back(i);
+        }
+      }
       s = s->getNext();
-    }
+    } 
+    of << dot->generateDotRepresentation(closure, id);
     of.close();
+  }
+
+  std::vector<int> Graph::getAllNodesConnected(int id) {
+    Node* node = searchById(id);
+    std::vector<int> vec;
+    vec.reserve(5);
+    Edge* edge = node->getEdge();
+    while(edge != nullptr) {
+      vec.push_back(edge->getTo());
+      edge = edge->getNext();
+    }
+    return vec;
+  }
+
+  std::vector<Utils::DotType> Graph::generateDotTypeVector() {
+    Node* p = node;
+    Utils::Dot* dot = new Utils::Dot();
+    std::vector<DotType> dots;
+    while(p != nullptr) {
+      std::vector<int> connected = getAllNodesConnected(node->id);
+      Utils::DotType type = {node->id, connected};
+      dots.push_back(type);
+    }
+    std::cout << dot->generateDotRepresentation(dots);
+    return dots;
   }
 }

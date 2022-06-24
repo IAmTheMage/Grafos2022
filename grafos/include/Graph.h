@@ -4,6 +4,7 @@
 #include "sstream"
 #include "string"
 #include "vector"
+#include "../include/Dot.h"
 
 namespace Graph {
   #ifndef GRAPH
@@ -33,6 +34,8 @@ namespace Graph {
       };
       Node* searchById(int id);
       void directTransitiveClosure(int id);
+      std::vector<int> getAllNodesConnected(int id);
+      std::vector<DotType> generateDotTypeVector();
     private:
       Node* node;
       GraphType graphType;
@@ -40,7 +43,6 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
       std::ifstream fs;
-      std::fstream of;
   };
   #endif 
 }
