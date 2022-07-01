@@ -149,11 +149,19 @@ namespace Graph {
     path.append("indirectTransitiveClosure.dot");
     std::cout << path << "\n";
     std::fstream file;
-    if(!of.is_open()) {
+    if(!file.is_open()) {
       std::cout << "NOT OPEN" << "\n";
     }
     
-    
+    while(assistant!=nullptr) {
+      this->setAllNodesVisitedFalse();
+      edge = assistant->getEdge();
+      while(edge!=nullptr) {
+        int to = edge->getTo();
+      }
+    }
+
+    file.close();
   }
 
   void Graph::setAllNodesVisitedFalse() {
