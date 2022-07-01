@@ -27,10 +27,21 @@ namespace Graph {
       int getEdgeCount() {
         return this->edgeCount;
       }
+
+      bool beenVisited() {
+        return this->wasVisited;
+      }
+      void setVisitFalse() {
+        this->wasVisited = false;
+      }
+      void visited() {
+        this->wasVisited = true;
+      }
     private:
       Node* next;
       Edge* edge;
       int edgeCount = 0;
+      bool wasVisited = false;
       Edge* getLastEdgeBeforeNull();
   };
 

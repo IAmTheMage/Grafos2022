@@ -34,8 +34,12 @@ namespace Graph {
       };
       Node* searchById(int id);
       void directTransitiveClosure(int id);
+      void indirectTransitiveClosure(int id);
+
       std::vector<int> getAllNodesConnected(int id);
       std::vector<DotType> generateDotTypeVector();
+
+      void setAllNodesVisitedFalse();
     private:
       Node* node;
       GraphType graphType;
