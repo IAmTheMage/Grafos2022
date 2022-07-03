@@ -176,6 +176,7 @@ namespace Graph {
       vertex = vertex->getNext();
     }
 
+    file << dot->generateDotRepresentation(indirectClosure, id);
     file.close();
   }
 
