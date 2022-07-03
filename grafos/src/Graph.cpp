@@ -170,7 +170,7 @@ namespace Graph {
         edge = edge->getNext();
       }
       
-      if(target->beenVisited() && (vertex!=target)) {
+      if(target->beenVisited() && (vertex->id!=target->id)) {
         indirectClosure.push_back(vertex->id);
       }
       vertex = vertex->getNext();
