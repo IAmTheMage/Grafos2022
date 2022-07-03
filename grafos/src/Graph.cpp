@@ -157,22 +157,12 @@ namespace Graph {
     
     while(vertex!=nullptr) {
       this->setAllNodesVisitedFalse();
-      vertex->visited();
-      edge = vertex->getEdge();
-      while(edge!=nullptr) {
-        int to = edge->getTo();
-        for(auto i : getAllNodesConnected(to)) {
-          assistant = this->searchById(i);
-          if(!assistant->beenVisited()) {
-            assistant->visited();
-          }
-        }
-        edge = edge->getNext();
-      }
-      
+      deepPath(vertex);
+
       if(target->beenVisited() && (vertex->id!=target->id)) {
         indirectClosure.push_back(vertex->id);
       }
+      
       vertex = vertex->getNext();
     }
 
