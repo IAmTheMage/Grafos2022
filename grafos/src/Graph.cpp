@@ -125,7 +125,7 @@ namespace Graph {
   std::vector<Utils::DotType> Graph::generateDotTypeVector() {
     Node* p = node;
     Utils::Dot* dot = new Utils::Dot();
-    std::vector<DotType> dots;
+    std::vector<Utils::DotType> dots;
     while(p != nullptr) {
       std::vector<int> connected = getAllNodesConnected(node->id);
       Utils::DotType type = {node->id, connected};
@@ -150,6 +150,7 @@ namespace Graph {
     path.append("indirectTransitiveClosure.dot");
     std::cout << path << "\n";
     std::fstream file;
+    file.open(path, std::ios::trunc | std::ios::out);
     if(!file.is_open()) {
       std::cout << "NOT OPEN" << "\n";
     }
@@ -168,11 +169,10 @@ namespace Graph {
         }
         edge = edge->getNext();
       }
-
+      
       if(target->beenVisited() && (vertex!=target)) {
         indirectClosure.push_back(vertex->id);
       }
-
       vertex = vertex->getNext();
     }
 

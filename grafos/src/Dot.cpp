@@ -34,7 +34,6 @@ namespace Utils {
     for(DotType type : p) {
       processedInfo.append(std::to_string(type.id));
       processedInfo.append(" -> {");
-      for()
     }
     processedInfo.append("}");
     return processedInfo;

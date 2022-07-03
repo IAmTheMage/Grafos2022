@@ -8,8 +8,8 @@ namespace Utils {
   struct DotType {
     int id;
     std::vector<int> connected;
-  }
-
+  };
+  
   class Dot {
     public:
       Dot();

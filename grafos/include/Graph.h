@@ -37,7 +37,7 @@ namespace Graph {
       void indirectTransitiveClosure(int id);
 
       std::vector<int> getAllNodesConnected(int id);
-      std::vector<DotType> generateDotTypeVector();
+      std::vector<Utils::DotType> generateDotTypeVector();
 
       void setAllNodesVisitedFalse();
     private:

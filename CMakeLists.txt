@@ -34,3 +34,8 @@ add_test(
   NAME  DirectClosure
   COMMAND $<TARGET_FILE:test4> in.txt out.txt 1 1 0
 )
+
+add_test(
+  NAME  IndirectDirectClosure
+  COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
+)
