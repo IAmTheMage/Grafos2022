@@ -187,4 +187,18 @@ namespace Graph {
       node = node->getNext();
     }
   }
+
+  void Graph::deepPath(Node* node) {
+    Node* assistant = nullptr;
+    node->visited();
+    Edge *edge = node->getEdge();
+
+    while(edge != nullptr) {
+      assistant = this->searchById(edge->getTo());
+      if(!assistant->beenVisited()) {
+        this->deepPath(assistant);
+      }
+      edge = edge->getNext();
+    }
+  }
 }

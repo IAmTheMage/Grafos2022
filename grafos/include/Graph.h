@@ -40,6 +40,7 @@ namespace Graph {
       std::vector<Utils::DotType> generateDotTypeVector();
 
       void setAllNodesVisitedFalse();
+      void deepPath(Node* node);
     private:
       Node* node;
       GraphType graphType;
