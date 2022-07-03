@@ -140,6 +140,7 @@ namespace Graph {
     std::vector<int> indirectClosure;
     Node* vertex = this->node;
     Node* assistant = nullptr;
+    Node* target = searchById(id);
     Edge* edge;
 
     // Ideia similar ao fecho transitivo direto:
@@ -161,9 +162,18 @@ namespace Graph {
         int to = edge->getTo();
         for(auto i : getAllNodesConnected(to)) {
           assistant = this->searchById(i);
-          
+          if(!assistant->beenVisited()) {
+            assistant->visited();
+          }
         }
+        edge = edge->getNext();
       }
+
+      if(target->beenVisited() && (vertex!=target)) {
+        indirectClosure.push_back(vertex->id);
+      }
+
+      vertex = vertex->getNext();
     }
 
     file.close();
