@@ -36,6 +36,6 @@ add_test(
 )
 
 add_test(
-  NAME  DirectClosureConsole
+  NAME  IndirectDirectClosure
   COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
 )

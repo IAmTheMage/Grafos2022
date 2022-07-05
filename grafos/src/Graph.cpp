@@ -144,7 +144,60 @@ namespace Graph {
     return value;
   }
 
-  /*std::vector<Utils::DotType> Graph::generateDotTypeVector() {
+  // Fecho transitivo indireto:
+  void Graph::indirectTransitiveClosure(int id) {
+    std::vector<int> indirectClosure;
+    Node* vertex = this->node;
+    Node* assistant = nullptr;
+    Node* target = searchById(id);
+    Edge* edge;
+
+    // Ideia similar ao fecho transitivo direto:
+    Utils::Dot* dot = new Utils::Dot();
+    std::string path(ROOT_DIR);
+    std::cout << path << "\n";
+    path.append("indirectTransitiveClosure.dot");
+    std::cout << path << "\n";
+    std::fstream file;
+    file.open(path, std::ios::trunc | std::ios::out);
+    if(!file.is_open()) {
+      std::cout << "NOT OPEN" << "\n";
+    }
     
-  }*/
+    while(vertex!=nullptr) {
+      this->setAllNodesVisitedFalse();
+      deepPath(vertex);
+
+      if(target->beenVisited() && (vertex->id!=target->id)) {
+        indirectClosure.push_back(vertex->id);
+      }
+      
+      vertex = vertex->getNext();
+    }
+
+    file << dot->generateDotRepresentation(indirectClosure, id);
+    file.close();
+  }
+
+  void Graph::setAllNodesVisitedFalse() {
+    Node* node = this->node;
+    while(node!=nullptr) {
+      node->setVisitFalse();
+      node = node->getNext();
+    }
+  }
+
+  void Graph::deepPath(Node* node) {
+    Node* assistant = nullptr;
+    node->visited();
+    Edge *edge = node->getEdge();
+
+    while(edge != nullptr) {
+      assistant = this->searchById(edge->getTo());
+      if(!assistant->beenVisited()) {
+        this->deepPath(assistant);
+      }
+      edge = edge->getNext();
+    }
+  }
 }

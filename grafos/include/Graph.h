@@ -35,8 +35,13 @@ namespace Graph {
       };
       Node* searchById(int id);
       void directTransitiveClosure(int id);
-      Utils::DotType getAllNodesConnected(int id);
-      Utils::DotType generateDotTypeVector() {};
+      void indirectTransitiveClosure(int id);
+
+      std::vector<int> getAllNodesConnected(int id);
+      std::vector<Utils::DotType> generateDotTypeVector();
+
+      void setAllNodesVisitedFalse();
+      void deepPath(Node* node);
     private:
       Node* node;
       GraphType graphType;
