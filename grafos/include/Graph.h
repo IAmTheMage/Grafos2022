@@ -5,6 +5,7 @@
 #include "string"
 #include "vector"
 #include "../include/Dot.h"
+#include "PerformanceMetrics.h"
 
 namespace Graph {
   #ifndef GRAPH
@@ -34,8 +35,8 @@ namespace Graph {
       };
       Node* searchById(int id);
       void directTransitiveClosure(int id);
-      std::vector<int> getAllNodesConnected(int id);
-      std::vector<DotType> generateDotTypeVector();
+      Utils::DotType getAllNodesConnected(int id);
+      Utils::DotType generateDotTypeVector() {};
     private:
       Node* node;
       GraphType graphType;
@@ -43,6 +44,9 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
       std::ifstream fs;
+      std::vector<int> visited;
+      Utils::Dot* dt;
   };
+
   #endif 
 }
