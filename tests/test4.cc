@@ -2,5 +2,5 @@
 
 int main(int argc, char** argv) {
   Graph::Graph* graph = new Graph::Graph(argv);
-  graph->generateDotTypeVector();
+  graph->directTransitiveClosure(0);
 }
