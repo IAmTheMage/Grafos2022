@@ -2,10 +2,17 @@
 #include "string.h"
 #include "vector"
 #include "algorithm"
+
 #include "config.h"
 
 namespace Graph {
   Graph::Graph(char** args) {
+    dt = new Utils::Dot();
+    metrics = new Utils::PerformanceMetrics();
+    std::string outputPath("instance.txt");
+    metrics->setupOutputFile(outputPath);
+    metrics->setupTestSuit("InstanceGraph");
+    metrics->startClock();
     std::cout << "Instance new graph" << std::endl;
     if(strcmp(args[4], "1") == 0) {
       edgeType = EdgeType::PONDERED;
@@ -77,62 +84,103 @@ namespace Graph {
     else {
       std::cout << "Is close" << "\n";
     }
+    std::string graphPath;
+    graphPath.append(ROOT_DIR);
+    graphPath.append("graph.dot");
+    int id = node->id;
+    Utils::DotType t = getAllNodes(id);
+    dt->startGraph(graphPath);
+    dt->generateDotRepresentation(t);
+    dt->commit();
+    dt->endGraph();
+    metrics->endClock();
   }
 
   void Graph::directTransitiveClosure(int id) {
-    Utils::Dot* dot = new Utils::Dot();
+    Utils::PerformanceMetrics* metrics = new Utils::PerformanceMetrics();
+    metrics->setupOutputFile("metrics.txt");
     Node* n = searchById(id);
     std::string path(ROOT_DIR);
-    std::cout << path << "\n";
+    #ifdef LINUX
+    struct sysinfo memInfo;
+    long long physMemUsed = memInfo.totalram - memInfo.freeram;
+    //Multiply in next statement to avoid int overflow on right hand side...
+    physMemUsed *= memInfo.mem_unit;
+    metrics->setMemoryUsed(physMemUsed);
+    #endif
     path.append("out.dot");
     std::cout << path << "\n";
-    std::fstream of;
-    of.open(path, std::ios::trunc | std::ios::out);
-    if(!of.is_open()) {
-      std::cout << "NOT OPEN" << "\n";
-    }
-    Edge* s = n->getEdge();
-    int index = 0;
-    std::vector<int> closure;
-    while(s != nullptr) {
-      int to = s->getTo();
-      if(!(std::find(closure.begin(), closure.end(), to) != closure.end())) {
-        closure.push_back(to);
-      }
-      for(auto i : getAllNodesConnected(to)) {
-        if(!(std::find(closure.begin(), closure.end(), i) != closure.end())) {
-          closure.push_back(i);
-        }
-      }
-      s = s->getNext();
-    } 
-    of << dot->generateDotRepresentation(closure, id);
-    of.close();
+    #ifdef TEST_CASE
+    metrics->setupTestSuit("FileSystem");
+    metrics->startClock();
+    #endif
+    dt->startGraph(path);
+    Utils::DotType type = evaluateDirectTransitiveClosure(id);
+    dt->endGraph();
+    #ifdef TEST_CASE
+    metrics->endClock();
+    #endif
+    visited.clear();
+    std::cout << "Arestas de retorno: " << "\n";
+    std::cout << output << "\n";
+    output.clear();
+    while(!stackz.empty()) stackz.pop();
   }
 
-  std::vector<int> Graph::getAllNodesConnected(int id) {
-    Node* node = searchById(id);
-    std::vector<int> vec;
-    vec.reserve(5);
-    Edge* edge = node->getEdge();
-    while(edge != nullptr) {
-      vec.push_back(edge->getTo());
-      edge = edge->getNext();
+  Utils::DotType Graph::evaluateDirectTransitiveClosure(int id) {
+    Utils::DotType value;
+    value.id = id;
+    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
+      visited.push_back(id);
+      Node* node = searchById(id);
+      Edge* edge = node->getEdge();
+      while(edge != nullptr) {
+        value.connected.push_back(evaluateDirectTransitiveClosure(edge->getTo()));
+        edge = edge->getNext();
+      }
     }
-    return vec;
+    else {
+      output.append(std::to_string(stackz.top()));
+      output.append(" -> ");
+      output.append(std::to_string(id));
+      output.append("\n");
+      value.active = false;
+    }
+    #ifdef OUTPUTMODE_FILESYSTEM
+    dt->outputDotRepresentation(value);
+    #else
+    dt->consoleDotRepresentation(value);
+    #endif
+    stackz.push(id);
+    return value;
+  }
+
+  Utils::DotType Graph::getAllNodes(int id) {
+    Utils::DotType value;
+    value.id = id;
+    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
+      visited.push_back(id);
+      Node* node = searchById(id);
+      Edge* edge = node->getEdge();
+      while(edge != nullptr) {
+        value.connected.push_back(evaluateDirectTransitiveClosure(edge->getTo()));
+        edge = edge->getNext();
+      }
+    }
+    return value;
   }
 
   std::vector<Utils::DotType> Graph::generateDotTypeVector() {
-    Node* p = node;
+    /*Node* p = node;
     Utils::Dot* dot = new Utils::Dot();
     std::vector<Utils::DotType> dots;
     while(p != nullptr) {
-      std::vector<int> connected = getAllNodesConnected(node->id);
+      std::vector<int> connected = evaluateDirectTransitiveClosure(node->id);
       Utils::DotType type = {node->id, connected};
       dots.push_back(type);
     }
     std::cout << dot->generateDotRepresentation(dots);
-    return dots;
+    return dots;*/
   }
 
   // Fecho transitivo indireto:
@@ -178,7 +226,7 @@ namespace Graph {
     }
   }
 
-  void Graph::deepPath(Node* node) {
+  /*void Graph::deepPath(Node* node) {
     Node* assistant = nullptr;
     node->visited();
     Edge *edge = node->getEdge();
@@ -190,5 +238,24 @@ namespace Graph {
       }
       edge = edge->getNext();
     }
+  }*/
+
+  Utils::DotType Graph::deepPath(Node* node) {
+    Node* assistant = nullptr;
+    node->visited();
+    Edge *edge = node->getEdge();
+    Utils::DotType values;
+    values.id = node->id;
+    while(edge != nullptr) {
+      assistant = this->searchById(edge->getTo());
+      if(!assistant->beenVisited()) {
+        values.connected.push_back(this->deepPath(assistant));
+      }
+      else {
+        values.active = false;
+      }
+      edge = edge->getNext();
+    }
+    return values;
   }
 }

@@ -1,6 +1,6 @@
-#define INPUT_DIR "/home/yan/grafo2022/Grafos2022/tests/input/"
-#define EXPECTED_OUTPUT_DIR "/home/yan/grafo2022/Grafos2022/tests/expected_output/"
-#define ROOT_DIR "/home/yan/grafo2022/Grafos2022/"
+#define INPUT_DIR "/home/gustavo/Documents/TrabalhoGrafos/tests/input/"
+#define EXPECTED_OUTPUT_DIR "/home/gustavo/Documents/TrabalhoGrafos/tests/expected_output/"
+#define ROOT_DIR "/home/gustavo/Documents/TrabalhoGrafos/"
 
-#define ROOT_DIR "/home/yan/grafo2022/Grafos2022/"
-#define OUTPUT_FILES_DIRECTORY "/home/yan/grafo2022/Grafos2022/output/"
+#define ROOT_DIR "/home/gustavo/Documents/TrabalhoGrafos/"
+#define OUTPUT_FILES_DIRECTORY "/home/gustavo/Documents/TrabalhoGrafos/output/"
