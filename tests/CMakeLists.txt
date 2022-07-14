@@ -20,3 +20,7 @@ target_link_libraries(test5 PUBLIC grafo)
 add_executable(test4 test4.cc)
 target_link_libraries(test4 PUBLIC grafo)
 target_compile_definitions(test4 PUBLIC -DTEST_SUIT=Console -DOUTPUTMODE_FILESYSTEM=0)
+
+#add_executable(test6 test6.cc)
+#target_link_libraries(test5 PUBLIC grafo)
+#target_compile_definitions(test4 PUBLIC grafo)

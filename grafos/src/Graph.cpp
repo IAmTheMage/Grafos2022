@@ -164,12 +164,14 @@ namespace Graph {
       std::cout << "NOT OPEN" << "\n";
     }
     
+    std::cout << "Fecho transitivo indireto: ";
     while(vertex!=nullptr) {
       this->setAllNodesVisitedFalse();
       deepPath(vertex);
 
       if(target->beenVisited() && (vertex->id!=target->id)) {
         indirectClosure.push_back(vertex->id);
+        std::cout << vertex->id << " ";
       }
       
       vertex = vertex->getNext();

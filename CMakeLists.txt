@@ -36,6 +36,11 @@ add_test(
 )
 
 add_test(
-  NAME  IndirectDirectClosure
+  NAME  DirectClosure2
   COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
 )
+
+#add_test(
+#  NAME IndirectTransitiveClosure
+ # COMMAND $<TARGET_FILE:test6> in.txt out.txt 1 1 0
+#)
