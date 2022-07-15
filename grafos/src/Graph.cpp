@@ -146,10 +146,14 @@ namespace Graph {
 
   // b) Fecho transitivo indireto:
   void Graph::indirectTransitiveClosure(int id) {
+    Node* target = searchById(id);
+    if(target == nullptr) {
+      return;
+    }
+    
     std::vector<int> indirectClosure;
     Node* vertex = this->node;
     Node* assistant = nullptr;
-    Node* target = searchById(id);
     Edge* edge;
 
     // Ideia similar ao fecho transitivo direto:
