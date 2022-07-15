@@ -48,6 +48,9 @@ namespace Graph {
       EdgeType edgeType;
       int count = 0;
       void setFiles(std::string input, std::string output);
+
+      std::vector<Edge> deepPathTree(Node* vertex);
+
       std::ifstream fs;
       std::vector<int> visited;
       Utils::Dot* dt;

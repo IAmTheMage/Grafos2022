@@ -144,7 +144,7 @@ namespace Graph {
     return value;
   }
 
-  // Fecho transitivo indireto:
+  // b) Fecho transitivo indireto:
   void Graph::indirectTransitiveClosure(int id) {
     std::vector<int> indirectClosure;
     Node* vertex = this->node;
@@ -201,5 +201,26 @@ namespace Graph {
       }
       edge = edge->getNext();
     }
+  }
+
+  // i) Árvore dada pelo caminhamento em profundidade:
+
+  std::vector<Edge> Graph::deepPathTree(Node* vertex) {
+    vertex->visited();
+    Node* assistant = nullptr;
+    Edge* edgeAssistant = vertex->getEdge();
+
+    std::allocator<Edge> aloc;
+    std::vector<Edge, std::allocator<Edge>> edgesOfDeepPathTree;
+
+    while(edgeAssistant != nullptr) {
+      assistant = searchById(edgeAssistant->getTo());
+      if(!assistant->beenVisited()) {
+        edgesOfDeepPathTree.push_back(edgeAssistant, aloc);
+        edgesOfDeepPathTree.push_back(deepPathTree(assistant), aloc);
+      }
+    }
+
+    return edgesOfDeepPathTree;
   }
 }
