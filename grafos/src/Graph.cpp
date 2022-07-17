@@ -209,22 +209,25 @@ namespace Graph {
 
   // i) Árvore dada pelo caminhamento em profundidade:
 
-  std::vector<Edge> Graph::deepPathTree(Node* vertex) {
+  void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges) {
     vertex->visited();
+    nodesInThePath.push_back(vertex->id);
     Node* assistant = nullptr;
-    Edge* edgeAssistant = vertex->getEdge();
+    Edge* edge = vertex->getEdge();
 
-    std::allocator<Edge> aloc;
-    std::vector<Edge, std::allocator<Edge>> edgesOfDeepPathTree;
+    while(edge!=nullptr) {
+      assistant = searchById(edge->getTo());
 
-    while(edgeAssistant != nullptr) {
-      assistant = searchById(edgeAssistant->getTo());
-      if(!assistant->beenVisited()) {
-        edgesOfDeepPathTree.push_back(edgeAssistant, aloc);
-        edgesOfDeepPathTree.push_back(deepPathTree(assistant), aloc);
+      if(assistant->beenVisited()) {
+        for(auto i : nodesInThePath) {
+          if(assistant->id == i)
+            returnEdges.push_back(edge);
+        }
+      }
+      else {
+        deepPathTreeAssistant(assistant, nodesInThePath, returnEdges);
       }
     }
-
-    return edgesOfDeepPathTree;
+    nodesInThePath.pop_back();
   }
 }

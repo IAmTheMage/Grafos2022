@@ -37,6 +37,7 @@ namespace Graph {
       void directTransitiveClosure(int id);
       void indirectTransitiveClosure(int id);
 
+
       Utils::DotType getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();
 
@@ -49,7 +50,7 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
 
-      std::vector<Edge> deepPathTree(Node* vertex);
+      void deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges);
 
       std::ifstream fs;
       std::vector<int> visited;
