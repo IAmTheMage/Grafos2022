@@ -15,20 +15,20 @@ enable_testing()
 add_subdirectory(grafos)
 add_subdirectory(tests)
 
-add_test(
-NAME  CountNumberOfNodes
-COMMAND $<TARGET_FILE:test1> in.txt out.txt 1 1 0
-)
+# add_test(
+# NAME  CountNumberOfNodes
+# COMMAND $<TARGET_FILE:test1> in.txt out.txt 1 1 0
+# )
 
-add_test(
-  NAME  SearchByNode
-  COMMAND $<TARGET_FILE:test2> in.txt out.txt 1 1 0
-  )
+# add_test(
+#   NAME  SearchByNode
+#   COMMAND $<TARGET_FILE:test2> in.txt out.txt 1 1 0
+#   )
 
-add_test(
-  NAME  CreateDirectedEdge
-  COMMAND $<TARGET_FILE:test3> in.txt out.txt 1 1 0
-)
+# add_test(
+#   NAME  CreateDirectedEdge
+#   COMMAND $<TARGET_FILE:test3> in.txt out.txt 1 1 0
+# )
 
 add_test(
   NAME  DirectClosure
@@ -36,6 +36,16 @@ add_test(
 )
 
 add_test(
-  NAME  IndirectDirectClosure
+  NAME  DirectClosure2
   COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
+)
+
+#add_test(
+#  NAME IndirectTransitiveClosure
+ # COMMAND $<TARGET_FILE:test6> in.txt out.txt 1 1 0
+#)
+
+add_test(
+  NAME  ClusteringCoeficient
+  COMMAND $<TARGET_FILE:test7> in.txt out.txt 1 1 0
 )

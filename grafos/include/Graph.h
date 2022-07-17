@@ -5,9 +5,7 @@
 #include "string"
 #include "vector"
 #include "../include/Dot.h"
-#include "config.h"
-#include "../include/PerformanceMetrics.h"
-#include "stack"
+#include "PerformanceMetrics.h"
 
 namespace Graph {
   #ifndef GRAPH
@@ -38,26 +36,28 @@ namespace Graph {
       Node* searchById(int id);
       void directTransitiveClosure(int id);
       void indirectTransitiveClosure(int id);
-
-      Utils::DotType evaluateDirectTransitiveClosure(int id);
-      Utils::DotType getAllNodes(int id);
+      Utils::DotType getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();
+      float clusteringCoeficient(int id);
+      float clusteringGlobalCoeficient();
+      int neighborsConnected(int id, int* p, int size);
+
 
       void setAllNodesVisitedFalse();
-      //void deepPath(Node* node);
-      Utils::DotType deepPath(Node* node);
+      void deepPath(Node* node);
     private:
       Node* node;
       GraphType graphType;
       EdgeType edgeType;
       int count = 0;
-      Utils::PerformanceMetrics* metrics;
       void setFiles(std::string input, std::string output);
+
+      //std::vector<Edge> deepPathTree(Node* vertex);
+
       std::ifstream fs;
-      Utils::Dot* dt;
       std::vector<int> visited;
-      std::string output;
-      std::stack<int> stackz;
+      Utils::Dot* dt;
   };
+
   #endif 
 }

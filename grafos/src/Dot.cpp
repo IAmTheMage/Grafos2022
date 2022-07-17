@@ -29,11 +29,13 @@ namespace Utils {
   }
 
   void Dot::startGraph(std::string path) {
+    std::cout << path << "\n";
     of.open(path, std::ios::trunc | std::ios::out);
     if(!of.is_open()) {
       std::cout << "Error\n";
     }
-    of << "digraph D {\n";
+    data.append("digraph D {\n");
+    of << data;
   }
 
   void Dot::generateDotRepresentation(DotType p) {

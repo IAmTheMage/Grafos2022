@@ -2,17 +2,18 @@
 #include "string.h"
 #include "vector"
 #include "algorithm"
-
 #include "config.h"
+
+#ifdef LINUX
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+#endif
+
+
 
 namespace Graph {
   Graph::Graph(char** args) {
     dt = new Utils::Dot();
-    metrics = new Utils::PerformanceMetrics();
-    std::string outputPath("instance.txt");
-    metrics->setupOutputFile(outputPath);
-    metrics->setupTestSuit("InstanceGraph");
-    metrics->startClock();
     std::cout << "Instance new graph" << std::endl;
     if(strcmp(args[4], "1") == 0) {
       edgeType = EdgeType::PONDERED;
@@ -80,20 +81,17 @@ namespace Graph {
           values.clear();
         }
       }
+      std::fstream of;
+      std::string path(ROOT_DIR);
+      path.append("graph.dot");
+      of.open(path, std::ios::trunc | std::ios::out);
+      Utils::Dot* dot = new Utils::Dot();
+      //of << dot->generateDotRepresentation(generateDotTypeVector());
+      of.close();
     }
     else {
       std::cout << "Is close" << "\n";
     }
-    std::string graphPath;
-    graphPath.append(ROOT_DIR);
-    graphPath.append("graph.dot");
-    int id = node->id;
-    Utils::DotType t = getAllNodes(id);
-    dt->startGraph(graphPath);
-    dt->generateDotRepresentation(t);
-    dt->commit();
-    dt->endGraph();
-    metrics->endClock();
   }
 
   void Graph::directTransitiveClosure(int id) {
@@ -115,80 +113,46 @@ namespace Graph {
     metrics->startClock();
     #endif
     dt->startGraph(path);
-    Utils::DotType type = evaluateDirectTransitiveClosure(id);
+    Utils::DotType type = getAllNodesConnected(id);
     dt->endGraph();
     #ifdef TEST_CASE
     metrics->endClock();
     #endif
     visited.clear();
-    std::cout << "Arestas de retorno: " << "\n";
-    std::cout << output << "\n";
-    output.clear();
-    while(!stackz.empty()) stackz.pop();
   }
 
-  Utils::DotType Graph::evaluateDirectTransitiveClosure(int id) {
+  Utils::DotType Graph::getAllNodesConnected(int id) {
     Utils::DotType value;
     value.id = id;
-    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
-      visited.push_back(id);
-      Node* node = searchById(id);
-      Edge* edge = node->getEdge();
-      while(edge != nullptr) {
-        value.connected.push_back(evaluateDirectTransitiveClosure(edge->getTo()));
-        edge = edge->getNext();
-      }
+    visited.push_back(id);
+    Node* node = searchById(id);
+    if(node->beenVisited()) {
+      value.active = false;
+      return value;
     }
     else {
-      output.append(std::to_string(stackz.top()));
-      output.append(" -> ");
-      output.append(std::to_string(id));
-      output.append("\n");
-      value.active = false;
+      node->visited();
+    }
+    Edge* edge = node->getEdge();
+    while(edge != nullptr) {
+      value.connected.push_back(getAllNodesConnected(edge->getTo()));
+      edge = edge->getNext();
     }
     #ifdef OUTPUTMODE_FILESYSTEM
     dt->outputDotRepresentation(value);
     #else
     dt->consoleDotRepresentation(value);
     #endif
-    stackz.push(id);
     return value;
   }
 
-  Utils::DotType Graph::getAllNodes(int id) {
-    Utils::DotType value;
-    value.id = id;
-    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
-      visited.push_back(id);
-      Node* node = searchById(id);
-      Edge* edge = node->getEdge();
-      while(edge != nullptr) {
-        value.connected.push_back(evaluateDirectTransitiveClosure(edge->getTo()));
-        edge = edge->getNext();
-      }
-    }
-    return value;
-  }
-
-  std::vector<Utils::DotType> Graph::generateDotTypeVector() {
-    /*Node* p = node;
-    Utils::Dot* dot = new Utils::Dot();
-    std::vector<Utils::DotType> dots;
-    while(p != nullptr) {
-      std::vector<int> connected = evaluateDirectTransitiveClosure(node->id);
-      Utils::DotType type = {node->id, connected};
-      dots.push_back(type);
-    }
-    std::cout << dot->generateDotRepresentation(dots);
-    return dots;*/
-  }
-
-  // Fecho transitivo indireto:
+  // b) Fecho transitivo indireto:
   void Graph::indirectTransitiveClosure(int id) {
     std::vector<int> indirectClosure;
     Node* vertex = this->node;
     Node* assistant = nullptr;
     Node* target = searchById(id);
+    if(target == nullptr) return;
     Edge* edge;
 
     // Ideia similar ao fecho transitivo direto:
@@ -203,12 +167,14 @@ namespace Graph {
       std::cout << "NOT OPEN" << "\n";
     }
     
+    std::cout << "Fecho transitivo indireto: ";
     while(vertex!=nullptr) {
       this->setAllNodesVisitedFalse();
       deepPath(vertex);
 
       if(target->beenVisited() && (vertex->id!=target->id)) {
         indirectClosure.push_back(vertex->id);
+        std::cout << vertex->id << " ";
       }
       
       vertex = vertex->getNext();
@@ -226,7 +192,7 @@ namespace Graph {
     }
   }
 
-  /*void Graph::deepPath(Node* node) {
+  void Graph::deepPath(Node* node) {
     Node* assistant = nullptr;
     node->visited();
     Edge *edge = node->getEdge();
@@ -238,24 +204,72 @@ namespace Graph {
       }
       edge = edge->getNext();
     }
-  }*/
+  }
 
-  Utils::DotType Graph::deepPath(Node* node) {
-    Node* assistant = nullptr;
-    node->visited();
-    Edge *edge = node->getEdge();
-    Utils::DotType values;
-    values.id = node->id;
+  int Graph::neighborsConnected(int id, int* p, int size) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int count = 0;
     while(edge != nullptr) {
-      assistant = this->searchById(edge->getTo());
-      if(!assistant->beenVisited()) {
-        values.connected.push_back(this->deepPath(assistant));
-      }
-      else {
-        values.active = false;
+      for(int b = 0; b < size; b++) {
+        if(p[b] == edge->getTo() && !(std::find(s->visitedBy.begin(), s->visitedBy.end(), p[b]) != s->visitedBy.end())) {
+          count++;
+          searchById(p[b])->visitedBy.push_back(id);
+          break;
+        }
       }
       edge = edge->getNext();
     }
-    return values;
+    return count;
   }
+
+  float Graph::clusteringCoeficient(int id) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int* connected = new int[s->getEdgeCount()];
+    int clustering = 0;
+    int index = 0;
+    while(edge != nullptr) {
+      connected[index] = edge->getTo();
+      index++;
+      edge = edge->getNext();
+    }
+    for(int i = 0; i < index; i++) {
+      clustering += neighborsConnected(connected[i], connected, index);
+    }
+    if(s->getEdgeCount() == 0) return 0;
+    float clusteringRealValue = (float)((float)clustering/s->getEdgeCount());
+    return clusteringRealValue;
+  }
+
+  float Graph::clusteringGlobalCoeficient() {
+    float sum = 0.0;
+    Node* p = this->node;
+    while(p != nullptr) {
+      sum += clusteringCoeficient(p->id);
+      p = p->getNext();
+    }
+    return sum;
+  }
+
+  // i) Árvore dada pelo caminhamento em profundidade:
+
+  /*std::vector<Edge> Graph::deepPathTree(Node* vertex) {
+    vertex->visited();
+    Node* assistant = nullptr;
+    Edge* edgeAssistant = vertex->getEdge();
+
+    std::allocator<Edge> aloc;
+    std::vector<Edge, std::allocator<Edge>> edgesOfDeepPathTree;
+
+    while(edgeAssistant != nullptr) {
+      assistant = searchById(edgeAssistant->getTo());
+      if(!assistant->beenVisited()) {
+        edgesOfDeepPathTree.push_back(edgeAssistant, aloc);
+        edgesOfDeepPathTree.push_back(deepPathTree(assistant), aloc);
+      }
+    }
+
+    return edgesOfDeepPathTree;
+  }*/
 }

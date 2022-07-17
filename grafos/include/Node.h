@@ -1,5 +1,6 @@
 #include "./Edge.h"
 #include "iostream"
+#include "vector"
 
 namespace Graph {
   #ifndef NODE
@@ -37,6 +38,8 @@ namespace Graph {
       void visited() {
         this->wasVisited = true;
       }
+
+      std::vector<int> visitedBy;
     private:
       Node* next;
       Edge* edge;
