@@ -39,6 +39,10 @@ namespace Graph {
 
       Utils::DotType getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();
+      float clusteringCoeficient(int id);
+      float clusteringGlobalCoeficient();
+      int neighborsConnected(int id, int* p, int size);
+
 
       void setAllNodesVisitedFalse();
       void deepPath(Node* node);
@@ -49,7 +53,7 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
 
-      std::vector<Edge> deepPathTree(Node* vertex);
+      //std::vector<Edge> deepPathTree(Node* vertex);
 
       std::ifstream fs;
       std::vector<int> visited;

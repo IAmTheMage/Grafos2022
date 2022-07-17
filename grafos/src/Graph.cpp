@@ -124,17 +124,19 @@ namespace Graph {
   Utils::DotType Graph::getAllNodesConnected(int id) {
     Utils::DotType value;
     value.id = id;
-    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
-      visited.push_back(id);
-      Node* node = searchById(id);
-      Edge* edge = node->getEdge();
-      while(edge != nullptr) {
-        value.connected.push_back(getAllNodesConnected(edge->getTo()));
-        edge = edge->getNext();
-      }
+    visited.push_back(id);
+    Node* node = searchById(id);
+    if(node->beenVisited()) {
+      value.active = false;
+      return value;
     }
     else {
-      value.active = false;
+      node->visited();
+    }
+    Edge* edge = node->getEdge();
+    while(edge != nullptr) {
+      value.connected.push_back(getAllNodesConnected(edge->getTo()));
+      edge = edge->getNext();
     }
     #ifdef OUTPUTMODE_FILESYSTEM
     dt->outputDotRepresentation(value);
@@ -203,9 +205,55 @@ namespace Graph {
     }
   }
 
+  int Graph::neighborsConnected(int id, int* p, int size) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int count = 0;
+    while(edge != nullptr) {
+      for(int b = 0; b < size; b++) {
+        if(p[b] == edge->getTo() && !(std::find(s->visitedBy.begin(), s->visitedBy.end(), p[b]) != s->visitedBy.end())) {
+          count++;
+          searchById(p[b])->visitedBy.push_back(id);
+          break;
+        }
+      }
+      edge = edge->getNext();
+    }
+    return count;
+  }
+
+  float Graph::clusteringCoeficient(int id) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int* connected = new int[s->getEdgeCount()];
+    int clustering = 0;
+    int index = 0;
+    while(edge != nullptr) {
+      connected[index] = edge->getTo();
+      index++;
+      edge = edge->getNext();
+    }
+    for(int i = 0; i < index; i++) {
+      clustering += neighborsConnected(connected[i], connected, index);
+    }
+    if(s->getEdgeCount() == 0) return 0;
+    float clusteringRealValue = (float)((float)clustering/s->getEdgeCount());
+    return clusteringRealValue;
+  }
+
+  float Graph::clusteringGlobalCoeficient() {
+    float sum = 0.0;
+    Node* p = this->node;
+    while(p != nullptr) {
+      sum += clusteringCoeficient(p->id);
+      p = p->getNext();
+    }
+    return sum;
+  }
+
   // i) Árvore dada pelo caminhamento em profundidade:
 
-  std::vector<Edge> Graph::deepPathTree(Node* vertex) {
+  /*std::vector<Edge> Graph::deepPathTree(Node* vertex) {
     vertex->visited();
     Node* assistant = nullptr;
     Edge* edgeAssistant = vertex->getEdge();
@@ -222,5 +270,5 @@ namespace Graph {
     }
 
     return edgesOfDeepPathTree;
-  }
+  }*/
 }
