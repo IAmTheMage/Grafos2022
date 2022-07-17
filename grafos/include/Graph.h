@@ -36,7 +36,7 @@ namespace Graph {
       Node* searchById(int id);
       void directTransitiveClosure(int id);
       void indirectTransitiveClosure(int id);
-
+      std::vector<Edge*> deepPathTree(int id);
 
       Utils::DotType getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();

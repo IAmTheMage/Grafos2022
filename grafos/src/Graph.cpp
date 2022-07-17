@@ -209,6 +209,22 @@ namespace Graph {
 
   // i) Árvore dada pelo caminhamento em profundidade:
 
+
+  std::vector<Edge*> Graph::deepPathTree(int id) {
+    Node* vertex = searchById(id);
+    std::vector<Edge*> returnEdges;
+
+    if(vertex==nullptr) {
+      return returnEdges;
+    }
+
+    std::vector<int> nodesInThePath;
+
+    deepPathTreeAssistant(vertex, nodesInThePath, returnEdges);
+
+    return returnEdges;
+  }
+
   void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges) {
     vertex->visited();
     nodesInThePath.push_back(vertex->id);
