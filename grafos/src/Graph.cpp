@@ -211,13 +211,27 @@ namespace Graph {
 
 
   std::vector<Edge*> Graph::deepPathTree(int id) {
+    // Nó do vértice raiz da árvore
     Node* vertex = searchById(id);
+    // arestas de retorno
     std::vector<Edge*> returnEdges;
 
+    // Se o vértice não existir, retornar a lista de arestas vazia
     if(vertex==nullptr) {
       return returnEdges;
     }
 
+    // Vetor dos nós que irão compor um caminho:
+    // Funcionamento: Se um vértice for visitado ele irá,
+    // em um primeiro momento, entrar no vetor nodesInThePath,
+    // que guarda todos os vértices que compõem o caminho entre
+    // a raiz e o vértice que foi visitado.
+    // Quando o laço de repetição da função assistente 
+    // deepPathAssistent() se encerra, o id do último vetor
+    // visitado é retirado do final do vetor.
+    // O vetor é usado para descobrir todas as arestas de retorno:
+    // se a aresta do último vértice visitado se conecta com algum
+    // vértice do vetor, então esssa é uma aresta de retorno.
     std::vector<int> nodesInThePath;
 
     deepPathTreeAssistant(vertex, nodesInThePath, returnEdges);
@@ -226,14 +240,26 @@ namespace Graph {
   }
 
   void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges) {
+    // O vértice passado como parâmetro é visitado
     vertex->visited();
+    // nodesInThePath recebe o id do vértice visitado para
+    // colocar no caminho da árvore
     nodesInThePath.push_back(vertex->id);
+    // Nó assistente para as operações
     Node* assistant = nullptr;
+    // Aresta do vértice passado como parâmetro
     Edge* edge = vertex->getEdge();
 
     while(edge!=nullptr) {
+      // o nó assistente irá receber o vértice apontado pela aresta
       assistant = searchById(edge->getTo());
 
+      // Se o vértice foi visitado, será feita uma verificação
+      // no vetor nodesInThePath para saber se algum vértice
+      // no caminho da raíz até o último nó visitado corresponde
+      // ao vértice assistente.
+      // Caso o vértice não tenha sido visitado, será feita uma
+      // chamada recursiva passando o vértice assistente como parâmetro
       if(assistant->beenVisited()) {
         for(auto i : nodesInThePath) {
           if(assistant->id == i)
@@ -243,7 +269,10 @@ namespace Graph {
       else {
         deepPathTreeAssistant(assistant, nodesInThePath, returnEdges);
       }
+
+      edge = edge->getNext();
     }
+    // o id do nó assistente é retirado do vetor nodesInThePath
     nodesInThePath.pop_back();
   }
 }
