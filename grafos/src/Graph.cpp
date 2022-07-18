@@ -53,9 +53,6 @@ namespace Graph {
       std::string b;
       std::getline(ip, b);
       int numberOfNodes = std::atoi(b.c_str());
-      for(int j = 0; j < numberOfNodes; j++) {
-        this->instanceNewNode();
-      }
       std::vector<int> values;
       while(getline(ip, b)) {
         std::string s;
@@ -64,9 +61,17 @@ namespace Graph {
           while(getline(temp, s, ' ')) {
             values.push_back(std::atoi(s.c_str()));
           }
-          this->searchById(values[0])->makeRelationship(values[1], values[2]);
+          Node* p = this->searchById(values[0]);
+          if(p == nullptr) {
+            p = instanceNewNode(values[0]);
+          }
+          Node* s = this->searchById(values[1]);
+          if(s == nullptr) {
+            s = instanceNewNode(values[1]);
+          }
+          p->makeRelationship(values[1], values[2]);
           if(graphType == GraphType::NONDIRECTED) {
-            this->searchById(values[1])->makeRelationship(values[0], values[2]);
+            s->makeRelationship(values[0], values[2]);
           }
           values.clear();
         }
@@ -74,9 +79,17 @@ namespace Graph {
           while(getline(temp, s, ' ')) {
             values.push_back(std::atoi(s.c_str()));
           }
-          this->searchById(values[0])->makeRelationship(values[1], 0);
+          Node* p = this->searchById(values[0]);
+          if(p == nullptr) {
+            p = instanceNewNode(values[0]);
+          }
+          p->makeRelationship(values[1], 0);
+          Node* s = this->searchById(values[1]);
+          if(s == nullptr) {
+            s = instanceNewNode(values[1]);
+          }
           if(graphType == GraphType::NONDIRECTED) {
-            this->searchById(values[1])->makeRelationship(values[0], 0);
+            s->makeRelationship(values[0], 0);
           }
           values.clear();
         }
@@ -250,6 +263,82 @@ namespace Graph {
       p = p->getNext();
     }
     return sum;
+  }
+
+  int Graph::getNodeReferenceIndex(int id) {
+    Node* p = node;
+    int index = 0;
+    while(index < count) {
+      if(p->id == id) return index;
+      index++;
+      p = p->getNext();
+    }
+    std::cout << "Erro, indice invalido: " << id << std::endl;
+    exit(0);
+  }
+
+  Node* Graph::getNodeByPosition(int id) {
+    Node* p = node;
+    while(true) {
+      if(p->id == id) return p;
+      p = p->getNext();
+      if(p == nullptr) {
+        std::cout << "Erro, indice invalido" << std::endl;
+        exit(0);
+      }
+    }
+  }
+
+  std::list<int> Graph::dijkstra(int origin, int destination) {
+    int* dist = new int[this->count];
+    bool* visited = new bool[this->count];
+    int* predecessor = new int[this->count];
+    for(int i = 0; i < this->count; i++) {
+      dist[i] = INT_MAX, visited[i] = false;
+    }
+    int nodeReference = getNodeReferenceIndex(origin);
+    dist[nodeReference] = 0;
+    std::priority_queue<std::pair<int, int>, 
+    std::vector<std::pair<int, int>>, 
+    std::greater<std::pair<int, int>>> priority;
+    priority.push(std::make_pair(dist[nodeReference], origin));
+    Node* node = nullptr;
+    Edge* edge = nullptr;
+    while(!priority.empty()) {
+      std::pair<int, int> topInQueue = priority.top();
+      int selected = topInQueue.second;
+      priority.pop();
+      int nodeReferenceIndex = getNodeReferenceIndex(selected);
+      if(visited[nodeReferenceIndex] == false) {
+        visited[nodeReferenceIndex] = true;
+        Node* selectedNode = searchById(selected);
+        if(selectedNode != nullptr) edge = selectedNode->getEdge();
+        while(edge != nullptr) {
+          int weight = 1;
+          if(edgeType == EdgeType::PONDERED) weight = edge->getWeight();
+          int ver = getNodeReferenceIndex(edge->getTo());
+          if(dist[ver] > (dist[nodeReferenceIndex] + weight)) {
+            predecessor[ver] = selected;
+            dist[ver] = (dist[nodeReferenceIndex] + weight);
+            priority.push(std::make_pair(dist[ver], edge->getTo()));
+          }
+          edge = edge->getNext();
+        }
+      }
+    }
+    return shortestPath(origin, destination, predecessor);
+  }
+
+  std::list<int> Graph::shortestPath(int origin, int destination, int* predecessors) {
+    std::list<int> path;
+    path.push_front(destination);
+    int ver = getNodeReferenceIndex(destination);
+    while(predecessors[ver] != origin) {
+      path.push_front(predecessors[ver]);
+      ver = getNodeReferenceIndex(predecessors[ver]);
+    }
+    path.push_front(origin);
+    return path;
   }
 
   // i) Árvore dada pelo caminhamento em profundidade:
