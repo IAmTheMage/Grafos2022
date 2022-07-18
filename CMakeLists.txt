@@ -49,3 +49,9 @@ add_test(
   NAME  ClusteringCoeficient
   COMMAND $<TARGET_FILE:test7> in.txt out.txt 1 1 0
 )
+
+add_test(
+  NAME  MooreDijkstra
+  COMMAND $<TARGET_FILE:test8> in.txt out.txt 1 1 0
+)
+

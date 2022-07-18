@@ -6,6 +6,6 @@ using namespace std;
 int main(int argc, char *argv[])
 {
   Graph::Graph* graph = new Graph::Graph(argv);
-  if(graph->countNumberOfNodes() == 6) return 0;
+  graph->print();
   return -1;
 }
