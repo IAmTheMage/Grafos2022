@@ -1,6 +1,7 @@
 #include "../include/Graph.h" 
 #include "string.h"
 #include "vector"
+#include "stack" // revisar
 #include "algorithm"
 #include "config.h"
 
@@ -234,6 +235,9 @@ namespace Graph {
     // vértice do vetor, então esssa é uma aresta de retorno.
     std::vector<int> nodesInThePath;
 
+    this->setAllNodesVisitedFalse();
+
+    std::cout << "Arestas de retorno: ";
     deepPathTreeAssistant(vertex, nodesInThePath, returnEdges);
 
     return returnEdges;
@@ -262,8 +266,10 @@ namespace Graph {
       // chamada recursiva passando o vértice assistente como parâmetro
       if(assistant->beenVisited()) {
         for(auto i : nodesInThePath) {
-          if(assistant->id == i)
+          if(assistant->id == i) {
+            std::cout << vertex->id << " -> " << i << ", ";
             returnEdges.push_back(edge);
+          }
         }
       }
       else {
