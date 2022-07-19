@@ -39,3 +39,13 @@ add_test(
   NAME  IndirectDirectClosure
   COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
 )
+
+add_test(
+  NAME  VertexInducedSubgraph
+  COMMAND $<TARGET_FILE:test6> in.txt out.txt 1 1 0
+)
+
+add_test(
+  NAME  AlgorithmPrim
+  COMMAND $<TARGET_FILE:test7> in.txt out.txt 1 1 0
+)

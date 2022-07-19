@@ -3,6 +3,9 @@
 #include "vector"
 #include "algorithm"
 #include "config.h"
+#include "utility"
+#include <queue>
+#define INF 99999999
 
 namespace Graph {
   Graph::Graph(char** args) {
@@ -191,4 +194,66 @@ namespace Graph {
       edge = edge->getNext();
     }
   }
+
+
+  void Graph::algorithmPrim(std::vector< std::vector<std::pair<int,int>>> &subGraph) {
+    
+    int order = subGraph.size();
+
+    std::vector<int> distance(order, INF);
+    distance[0] = 0;
+
+    std::vector<bool> visited(order, false);
+    
+    std::vector<int> parent(order,-1);
+
+    std::priority_queue<std::pair<int,int>,
+    std::vector<std::pair<int,int>>,
+    std::greater<std::pair<int,int>> > priorityQueue;
+
+    priorityQueue.push( std::make_pair(distance[0], 0));
+
+    while(!priorityQueue.empty()) {
+      int u = priorityQueue.top().second;
+      priorityQueue.pop();
+
+      visited[u] = true;
+
+      for(std::pair<int,int> edge: subGraph[u]) {
+        int v = edge.first;
+        int weigth = edge.second;
+
+        if(!visited[v] && distance[v] > weigth) {
+          distance[v] = weigth;
+          priorityQueue.push(std::make_pair(distance[v], v));
+          parent[v] = u;
+        }
+      }
+    }
+
+     for(int i=1;i<order;i++){
+          std::cout << parent[i] << " - "  << i << std::endl;
+      }
+  }
+
+  std::vector<std::vector<std::pair<int, int>>> Graph::vertexInducedSubgraph(std::vector<int> &subVertex) {
+
+    Node* node;
+    Edge* edge;
+    std::vector< std::vector<std::pair<int,int>>> subGraph(subVertex.size());
+
+    for(int i = 0;i < subVertex.size(); i++) {    
+      node = searchById(subVertex[i]);
+      for(edge = node->getEdge(); edge != nullptr; edge = edge->getNext()) {
+        for(int j = 0; j < subVertex.size();j++) {
+          if(edge->getTo() == subVertex[j]) {
+            std::cout << edge->getFrom() << "-->" << edge->getTo() << " - " << edge->getWeight() << std::endl;
+            subGraph[edge->getFrom()].push_back( {edge->getTo(), edge->getWeight()} );
+          }
+        }
+      }
+    }
+    
+    return subGraph;
+ }
 }

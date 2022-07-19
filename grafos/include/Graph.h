@@ -35,6 +35,8 @@ namespace Graph {
       Node* searchById(int id);
       void directTransitiveClosure(int id);
       void indirectTransitiveClosure(int id);
+      std::vector<std::vector<std::pair<int, int>>> vertexInducedSubgraph(std::vector<int> &vertex);
+      void algorithmPrim(std::vector< std::vector<std::pair<int,int>>> &subGraph);
 
       std::vector<int> getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();

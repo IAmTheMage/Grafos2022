@@ -13,3 +13,9 @@ target_link_libraries(test4 PUBLIC grafo)
 
 add_executable(test5 test5.cc)
 target_link_libraries(test5 PUBLIC grafo)
+
+add_executable(test6 test6.cc)
+target_link_libraries(test6 PUBLIC grafo)
+
+add_executable(test7 test7.cc)
+target_link_libraries(test7 PUBLIC grafo)
