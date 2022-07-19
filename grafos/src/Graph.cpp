@@ -230,10 +230,6 @@ namespace Graph {
         }
       }
     }
-
-     for(int i=1;i<order;i++){
-          std::cout << parent[i] << " - "  << i << std::endl;
-      }
   }
 
   std::vector<std::vector<std::pair<int, int>>> Graph::vertexInducedSubgraph(std::vector<int> &subVertex) {
