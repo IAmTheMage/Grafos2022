@@ -267,7 +267,8 @@ namespace Graph {
       if(assistant->beenVisited()) {
         for(auto i : nodesInThePath) {
           if(assistant->id == i) {
-            std::cout << vertex->id << " -> " << i << ", ";
+            // Impressão das arestas de retorno ( Usada em testes)
+            //std::cout << vertex->id << " -> " << i << ", ";
             returnEdges.push_back(edge);
           }
         }
