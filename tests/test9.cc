@@ -8,5 +8,10 @@ int main(int argc, char** argv) {
   
   returnEdges = graph->deepPathTree(0);
   
+  std::cout << "Arestas de retorno: ";
+  for(auto i : returnEdges) {
+    std::cout << i->getFrom() << " -> " << i->getTo() << ", ";
+  }
+  std::cout << "\n";
   return -1;
 }

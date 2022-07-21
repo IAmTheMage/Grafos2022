@@ -88,7 +88,7 @@ namespace Graph {
       int count = 0;
       void setFiles(std::string input, std::string output);
 
-      void deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges);
+      void deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges);
 
       std::ifstream fs;
       std::vector<int> visited;

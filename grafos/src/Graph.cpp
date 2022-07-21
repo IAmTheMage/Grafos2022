@@ -486,6 +486,11 @@ namespace Graph {
       return returnEdges;
     }
 
+    std::string path(ROOT_DIR);
+    path.append("deepPathTree.dot");
+    std::cout << path << "\n";
+
+    std::vector<Utils::WeightedDot> dots;
     // Vetor dos nós que irão compor um caminho:
     // Funcionamento: Se um vértice for visitado ele irá,
     // em um primeiro momento, entrar no vetor nodesInThePath,
@@ -500,14 +505,14 @@ namespace Graph {
     std::vector<int> nodesInThePath;
 
     this->setAllNodesVisitedFalse();
+    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges);
 
-    std::cout << "Arestas de retorno: ";
-    deepPathTreeAssistant(vertex, nodesInThePath, returnEdges);
+    dt->writeOnFile(path, dots, true);
 
     return returnEdges;
   }
 
-  void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int> nodesInThePath, std::vector<Edge*> returnEdges) {
+  void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges) {
     // O vértice passado como parâmetro é visitado
     vertex->visited();
     // nodesInThePath recebe o id do vértice visitado para
@@ -538,7 +543,13 @@ namespace Graph {
         }
       }
       else {
-        deepPathTreeAssistant(assistant, nodesInThePath, returnEdges);
+        Utils::WeightedDot dot;
+        dot.origin = vertex->id;
+        dot.destination = assistant->id;
+        dot.weight = edge->getWeight();
+        dots.push_back(dot);
+
+        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges);
       }
 
       edge = edge->getNext();
