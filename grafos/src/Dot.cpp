@@ -28,6 +28,31 @@ namespace Utils {
     return processedInfo;
   }
 
+  void Dot::writeOnFile(std::string path, std::vector<WeightedDot> p, bool digraph) {
+    std::ofstream oof(path, std::ios::trunc | std::ios::out);
+    std::string outData;
+    if(digraph) {
+      oof << "digraph {\n";
+    }
+    else {
+      oof << "graph {\n";
+    }
+    for(WeightedDot dot : p) {
+      std::string n1; std::string n2; std::string weight;
+      n1 = std::to_string(dot.origin);
+      n2 = std::to_string(dot.destination);
+      weight = std::to_string(dot.weight);
+      outData.append(n1);
+      outData.append(" -> ");
+      outData.append(n2);
+      outData.append("[weight=");
+      outData.append(weight);
+      outData.append("]\n");
+    }
+    oof << outData;
+    oof << "}\n";
+  }
+
   void Dot::startGraph(std::string path) {
     std::cout << path << "\n";
     of.open(path, std::ios::trunc | std::ios::out);

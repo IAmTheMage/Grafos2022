@@ -17,6 +17,12 @@ namespace Utils {
     int to;
   };
 
+  struct WeightedDot {
+    int destination;
+    int origin;
+    int weight;
+  };
+
   class Dot {
     public:
       Dot();
@@ -28,6 +34,7 @@ namespace Utils {
       void startGraph(std::string path);
       void generateGraphRepresentation(Utils::DotType p);
       void endGraph();
+      void writeOnFile(std::string filePath, std::vector<WeightedDot> p, bool digraph); 
       void begin() {
         data.append("digraph D {\n");
         of << this->data;
