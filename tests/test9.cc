@@ -1,9 +1,12 @@
 #include "Graph.h"
+#include "Edge.h"
+#include "vector"
 
 int main(int argc, char** argv) {
   Graph::Graph *graph = new Graph::Graph(argv);
+  std::vector<Graph::Edge*> returnEdges;
   
-  graph->indirectTransitiveClosure(0);
+  returnEdges = graph->deepPathTree(0);
   
   return -1;
 }

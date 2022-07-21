@@ -26,5 +26,10 @@ target_compile_definitions(test4 PUBLIC -DTEST_SUIT=Console -DOUTPUTMODE_FILESYS
 #target_compile_definitions(test4 PUBLIC grafo)
 
 add_executable(test7 test7.cc)
-#target_compile_definitions(test7 PUBLIC -DTEST_SUIT=Console)
 target_link_libraries(test7 PUBLIC grafo)
+
+add_executable(test8 test8.cc)
+target_link_libraries(test8 PUBLIC grafo)
+
+add_executable(test9 test9.cc)
+target_link_libraries(test8 PUBLIC grafo)

@@ -1,5 +1,6 @@
 #include "./Edge.h"
 #include "iostream"
+#include "vector"
 
 namespace Graph {
   #ifndef NODE
@@ -37,11 +38,22 @@ namespace Graph {
       void visited() {
         this->wasVisited = true;
       }
+
+      void setPosition(int position) {
+        this->position = position;
+      }
+
+      int getPosition() {
+        return this->position;
+      }
+
+      std::vector<int> visitedBy;
     private:
       Node* next;
       Edge* edge;
       int edgeCount = 0;
       bool wasVisited = false;
+      int position = 0;
       Edge* getLastEdgeBeforeNull();
   };
 

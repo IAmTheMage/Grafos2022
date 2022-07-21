@@ -2,14 +2,25 @@
 #include "vector"
 #include "fstream"
 
-
 namespace Utils {
   #ifndef DOT
   #define DOT
   struct DotType {
     int id;
-    std::vector<DotType> connected;
     bool active = true;
+    std::vector<DotType> connected;
+    bool firstInstance = true;
+  };
+
+  struct ReturnEdge {
+    int from;
+    int to;
+  };
+
+  struct WeightedDot {
+    int destination;
+    int origin;
+    int weight;
   };
 
   class Dot {
@@ -21,10 +32,19 @@ namespace Utils {
       void outputDotRepresentation(Utils::DotType p);
       void consoleDotRepresentation(Utils::DotType p);
       void startGraph(std::string path);
+      void generateGraphRepresentation(Utils::DotType p);
       void endGraph();
+      void writeOnFile(std::string filePath, std::vector<WeightedDot> p, bool digraph); 
       void begin() {
         data.append("digraph D {\n");
-        of << data;
+        of << this->data;
+      }
+      void commit() {
+        of << data << std::endl;
+      }
+
+      std::string getData() {
+        return this->data;
       }
     private:
       std::string processedInfo;

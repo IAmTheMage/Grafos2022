@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+Suit; Metric; Memory Usage
+=======
 Suit; Metric; Memory UsageFileSystem;79.2857;3761948472408160522KB
 FileSystem;76.8275;0KB
 FileSystem;76.3955;0KB
@@ -15,3 +18,9 @@ FileSystem;63.7518;3761948472408160522KB
 FileSystem;61.2465;0KB
 FileSystem;60.6502;0KB
 FileSystem;60.257;0KB
+FileSystem;0.0019204;0KB
+FileSystem;0.0001426;0KB
+FileSystem;0.0001472;0KB
+>>>>>>> ClusteringCoeficient
+FileSystem;8.72e-05;0KB
+FileSystem;0.0001941;0KB

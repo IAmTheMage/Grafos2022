@@ -2,6 +2,6 @@
 
 int main(int argc, char** argv) {
   Graph::Graph* graph = new Graph::Graph(argv);
-  graph->indirectTransitiveClosure(50);
+  graph->indirectTransitiveClosure(4);
   return 0;
 }

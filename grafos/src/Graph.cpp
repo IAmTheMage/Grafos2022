@@ -54,9 +54,6 @@ namespace Graph {
       std::string b;
       std::getline(ip, b);
       int numberOfNodes = std::atoi(b.c_str());
-      for(int j = 0; j < numberOfNodes; j++) {
-        this->instanceNewNode();
-      }
       std::vector<int> values;
       while(getline(ip, b)) {
         std::string s;
@@ -65,9 +62,19 @@ namespace Graph {
           while(getline(temp, s, ' ')) {
             values.push_back(std::atoi(s.c_str()));
           }
-          this->searchById(values[0])->makeRelationship(values[1], values[2]);
+          Node* p = this->searchById(values[0]);
+          if(p == nullptr) {
+            p = instanceNewNode(values[0]);
+            p->setPosition(this->count - 1);
+          }
+          Node* s = this->searchById(values[1]);
+          if(s == nullptr) {
+            s = instanceNewNode(values[1]);
+            s->setPosition(this->count - 1);
+          }
+          p->makeRelationship(values[1], values[2]);
           if(graphType == GraphType::NONDIRECTED) {
-            this->searchById(values[1])->makeRelationship(values[0], values[2]);
+            s->makeRelationship(values[0], values[2]);
           }
           values.clear();
         }
@@ -75,9 +82,19 @@ namespace Graph {
           while(getline(temp, s, ' ')) {
             values.push_back(std::atoi(s.c_str()));
           }
-          this->searchById(values[0])->makeRelationship(values[1], 0);
+          Node* p = this->searchById(values[0]);
+          if(p == nullptr) {
+            p = instanceNewNode(values[0]);
+            p->setPosition(this->count - 1);
+          }
+          p->makeRelationship(values[1], 1);
+          Node* s = this->searchById(values[1]);
+          if(s == nullptr) {
+            s = instanceNewNode(values[1]);
+            s->setPosition(this->count - 1);
+          }
           if(graphType == GraphType::NONDIRECTED) {
-            this->searchById(values[1])->makeRelationship(values[0], 0);
+            s->makeRelationship(values[0], 1);
           }
           values.clear();
         }
@@ -93,6 +110,27 @@ namespace Graph {
     else {
       std::cout << "Is close" << "\n";
     }
+  }
+
+  void Graph::generateGraphVizRepresentation() {
+    std::string filePath(ROOT_DIR);
+    filePath.append("graph.dot");
+    std::vector<Utils::WeightedDot> dots;
+    Node* p = node;
+    Edge* edge = nullptr;
+    while(p != nullptr) {
+      edge = p->getEdge();
+      while(edge != nullptr) {
+        Utils::WeightedDot dot;
+        dot.origin = p->id;
+        dot.destination = edge->getTo();
+        dot.weight = edge->getWeight();
+        dots.push_back(dot);
+        edge = edge->getNext();
+      }
+      p = p->getNext();
+    }
+    dt->writeOnFile(filePath, dots, true);
   }
 
   void Graph::directTransitiveClosure(int id) {
@@ -125,17 +163,19 @@ namespace Graph {
   Utils::DotType Graph::getAllNodesConnected(int id) {
     Utils::DotType value;
     value.id = id;
-    if(!(std::find(visited.begin(), visited.end(), id) != visited.end())) {
-      visited.push_back(id);
-      Node* node = searchById(id);
-      Edge* edge = node->getEdge();
-      while(edge != nullptr) {
-        value.connected.push_back(getAllNodesConnected(edge->getTo()));
-        edge = edge->getNext();
-      }
+    visited.push_back(id);
+    Node* node = searchById(id);
+    if(node->beenVisited()) {
+      value.active = false;
+      return value;
     }
     else {
-      value.active = false;
+      node->visited();
+    }
+    Edge* edge = node->getEdge();
+    while(edge != nullptr) {
+      value.connected.push_back(getAllNodesConnected(edge->getTo()));
+      edge = edge->getNext();
     }
     #ifdef OUTPUTMODE_FILESYSTEM
     dt->outputDotRepresentation(value);
@@ -206,6 +246,230 @@ namespace Graph {
       }
       edge = edge->getNext();
     }
+  }
+
+  int Graph::neighborsConnected(int id, int* p, int size) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int count = 0;
+    while(edge != nullptr) {
+      for(int b = 0; b < size; b++) {
+        if(p[b] == edge->getTo() && !(std::find(s->visitedBy.begin(), s->visitedBy.end(), p[b]) != s->visitedBy.end())) {
+          count++;
+          searchById(p[b])->visitedBy.push_back(id);
+          break;
+        }
+      }
+      edge = edge->getNext();
+    }
+    return count;
+  }
+
+  float Graph::clusteringCoeficient(int id) {
+    Node* s = searchById(id);
+    Edge* edge = s->getEdge();
+    int* connected = new int[s->getEdgeCount()];
+    int clustering = 0;
+    int index = 0;
+    while(edge != nullptr) {
+      connected[index] = edge->getTo();
+      index++;
+      edge = edge->getNext();
+    }
+    for(int i = 0; i < index; i++) {
+      clustering += neighborsConnected(connected[i], connected, index);
+    }
+    if(s->getEdgeCount() == 0) return 0;
+    float clusteringRealValue = (float)((float)clustering/s->getEdgeCount());
+    return clusteringRealValue;
+  }
+
+  float Graph::clusteringGlobalCoeficient() {
+    float sum = 0.0;
+    Node* p = this->node;
+    while(p != nullptr) {
+      sum += clusteringCoeficient(p->id);
+      p = p->getNext();
+    }
+    return sum;
+  }
+
+  int Graph::getNodeReferenceIndex(int id) {
+    Node* p = node;
+    int index = 0;
+    while(index < count) {
+      if(p->id == id) return index;
+      index++;
+      p = p->getNext();
+    }
+    std::cout << "Erro, indice invalido: " << id << std::endl;
+    exit(0);
+  }
+
+  Node* Graph::getNodeByPosition(int id) {
+    Node* p = node;
+    for(int i = 0; i < id; i++) {
+      p = p->getNext();
+    }
+    return p;
+  }
+
+  std::list<int> Graph::dijkstra(int origin, int destination) {
+    int* dist = new int[this->count];
+    bool* visited = new bool[this->count];
+    int* predecessor = new int[this->count];
+    for(int i = 0; i < this->count; i++) {
+      dist[i] = INT_MAX, visited[i] = false;
+    }
+    int nodeReference = getNodeReferenceIndex(origin);
+    dist[nodeReference] = 0;
+    std::priority_queue<std::pair<int, int>, 
+    std::vector<std::pair<int, int>>, 
+    std::greater<std::pair<int, int>>> priority;
+    priority.push(std::make_pair(dist[nodeReference], origin));
+    Node* node = nullptr;
+    Edge* edge = nullptr;
+    while(!priority.empty()) {
+      std::pair<int, int> topInQueue = priority.top();
+      int selected = topInQueue.second;
+      priority.pop();
+      int nodeReferenceIndex = getNodeReferenceIndex(selected);
+      if(visited[nodeReferenceIndex] == false) {
+        visited[nodeReferenceIndex] = true;
+        Node* selectedNode = searchById(selected);
+        if(selectedNode != nullptr) edge = selectedNode->getEdge();
+        while(edge != nullptr) {
+          int weight = 1;
+          if(edgeType == EdgeType::PONDERED) weight = edge->getWeight();
+          int ver = getNodeReferenceIndex(edge->getTo());
+          if(dist[ver] > (dist[nodeReferenceIndex] + weight)) {
+            predecessor[ver] = selected;
+            dist[ver] = (dist[nodeReferenceIndex] + weight);
+            priority.push(std::make_pair(dist[ver], edge->getTo()));
+          }
+          edge = edge->getNext();
+        }
+      }
+    }
+    std::cout << "dijkstra finished" << std::endl;
+    return shortestPath(origin, destination, predecessor);
+  }
+
+  int** Graph::generateArrayRepresentation() {
+    int** dists = new int*[count];
+    for(int i = 0; i < count; i++) {
+      dists[i] = new int[count];
+      for(int j = 0; j < count; j++) {
+        if(i == j) {
+          dists[i][i] = 0;
+          continue;
+        }
+        dists[i][j] = INT_MAX;
+      }
+    }
+    Node* p = nullptr;
+    Edge* edge = nullptr;
+    for(int i = 0; i < count; i++) {
+      p = getNodeByPosition(i);
+      edge = p->getEdge();
+      while(edge != nullptr) {
+        Node* s = searchById(edge->getTo());
+        dists[i][s->getPosition()] = edge->getWeight();
+        edge = edge->getNext();
+      }
+    }
+    return dists;
+  }
+
+  std::list<int> Graph::floyd(int origin, int destination) {
+    int** dists = generateArrayRepresentation();
+    int** pred = initPred();
+    int k, i, j;
+    std::list<int> reList;
+    for(int i = 0; i < count; i++) {
+      for(int j = 0; j < count; j++) {
+        if(dists[i][j] == INT_MAX) {
+          std::cout << "I" << " ";
+          continue;
+        }
+        else {
+          std::cout << dists[i][j] << " ";
+        }
+      }
+      std::cout << std::endl;
+    }
+    for (k = 0; k < count; k++) {
+      for (i = 0; i < count; i++) {
+        for (j = 0; j < count; j++) {
+          if(dists[i][k] == INT_MAX || dists[k][j] == INT_MAX) continue;
+          if (dists[i][j] > (dists[i][k] + dists[k][j]))
+          {
+            dists[i][j] = dists[i][k] + dists[k][j];
+            pred[i][j] = pred[k][j]; //Atualiza a posição do no antercessor dos nos na posição i e j
+          }
+        }
+      }
+    } //Calculando a distância de todas as posições
+    Node* n = searchById(origin);
+    Node* s = searchById(destination);
+    int dist = dists[n->getPosition()][s->getPosition()];
+    if(dist < INT_MAX) {
+      std::cout << "A distancia e: " << dist << std::endl;
+      floydOut(reList, pred, origin, destination);
+    }
+    else {
+      std::cout << "A distancia e infinita, portanto os dois vertices nao sao conexos entre si" << std::endl << std::endl;
+    }
+    return reList;
+  }
+
+  void Graph::floydOut(std::list<int>& p, int** pred, int origin, int destination) {
+    int predecessor;
+    Node* n = searchById(origin);
+    Node* b = searchById(destination);
+    predecessor = pred[n->getPosition()][b->getPosition()];
+    while(predecessor != n->getPosition()) {
+      p.push_front(getNodeByPosition(predecessor)->id);
+      predecessor = pred[n->getPosition()][predecessor];
+    }
+    int index = 0;
+    p.push_back(destination);
+    p.push_front(origin);
+    std::cout << "O caminho e: ";
+    for(int b : p) {
+      if(index == p.size() - 1) {
+        std::cout << b << "\n";
+      }
+      else {
+        std::cout << b << "->";
+      }
+      index++;
+    }
+    std::cout << "Finalizado" << std::endl;
+  }
+
+  int** Graph::initPred() {
+    int** temp = new int*[count];
+    for(int i = 0; i < count; i++) {
+      temp[i] = new int[count];
+      for(int j = 0; j < count; j++) {
+        temp[i][j] = i;
+      }
+    }
+
+    return temp;
+  }
+
+  std::list<int> Graph::shortestPath(int origin, int destination, int* predecessors) {
+    std::list<int> path;
+    path.push_front(destination);
+    int ver = getNodeReferenceIndex(destination);
+    while(predecessors[ver] != origin) {
+      path.push_front(predecessors[ver]);
+      ver = getNodeReferenceIndex(predecessors[ver]);
+    }
+    path.push_front(origin);
+    return path;
   }
 
   // i) Árvore dada pelo caminhamento em profundidade:
