@@ -187,19 +187,32 @@ namespace Graph {
 
   // b) Fecho transitivo indireto:
   std::vector<int> Graph::indirectTransitiveClosure(int id) {
-    
+    // vértice o qual se procura o seu fecho transitivo indireto
     Node* target = searchById(id);
-    if(target == nullptr) {
-      return;
-    }
-    
+
+    // Se o vértice não existir, retornar o vetor vazio
     std::vector<int> indirectClosure;
+    if(target == nullptr) {
+      std::cout << "O vértice " << id << " não existe!\n";
+      return indirectClosure;
+    }
+
+    // Primeiro nó do grafo
     Node* vertex = this->node;
+    // Nó assistente para as operações
     Node* assistant = nullptr;
-    Edge* edge;
     
     //std::cout << "Fecho transitivo indireto: ";
+
+    // O algoritmo funciona da sequinte forma: 
+    // Todos os vértices do grafo farão o caminhamento em 
+    // profundidade, marcando todos os vértices ao seu alcance
+    // como visitados. Se o vértice alvo for visitado e não
+    // for o próprio vértice alvo, então esse vértice faz parte
+    // do fecho transitivo indireto (entra para o vetor indirectClosure)
     while(vertex!=nullptr) {
+      // Todos os vértices do grafo serão marcados como não visitados
+      // a cada vez que um novo vértice realizar o caminhamento em profundidade
       this->setAllNodesVisitedFalse();
       deepPath(vertex);
 
@@ -208,6 +221,7 @@ namespace Graph {
         //std::cout << vertex->id << " ";
       }
       
+      // próximo vértice do grafo
       vertex = vertex->getNext();
     }
 
@@ -215,23 +229,36 @@ namespace Graph {
   }
 
   void Graph::setAllNodesVisitedFalse() {
+    // "node" recebe o primeiro vértice do grafo
     Node* node = this->node;
+    // enquanto todos os vértices não forem visitados, marcar o vértice/nó atual
+    // como não visitado 
     while(node!=nullptr) {
       node->setVisitFalse();
       node = node->getNext();
     }
   }
 
+  // caminhamento em profundidade
   void Graph::deepPath(Node* node) {
+    // Nó assistente para as operações
     Node* assistant = nullptr;
+
+    // nó node é marcado como visitado
     node->visited();
+
+    // primeira aresta do nó "node" passado como parâmetro
     Edge *edge = node->getEdge();
 
+    // Enquanto todas as arestas do vértice "node" não forem usadas/"visitadas",
+    // Realizar o caminhamento em profundidade do nó destino
     while(edge != nullptr) {
       assistant = this->searchById(edge->getTo());
       if(!assistant->beenVisited()) {
         this->deepPath(assistant);
       }
+
+      // próxima aresta do nó node
       edge = edge->getNext();
     }
   }
