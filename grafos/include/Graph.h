@@ -61,8 +61,13 @@ namespace Graph {
       float clusteringGlobalCoeficient();
       int neighborsConnected(int id, int* p, int size);
       Node* getNodeByPosition(int id);
+      std::list<int> floyd(int origin, int destination);
+      void floydOut(std::list<int>& p, int** pred, int origin, int destination);
+      int** generateArrayRepresentation();
+      int** initPred();
 
       void setAllNodesVisitedFalse();
+      void generateGraphVizRepresentation();
       int getNodeReferenceIndex(int id); 
       void deepPath(Node* node);
       void print() {
