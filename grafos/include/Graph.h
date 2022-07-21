@@ -54,7 +54,7 @@ namespace Graph {
       std::list<int> dijkstra(int id, int destination);
       std::list<int> shortestPath(int origin ,int destination, int* predecessors);
       void directTransitiveClosure(int id);
-      void indirectTransitiveClosure(int id);
+      std::vector<int> indirectTransitiveClosure(int id);
       std::vector<Edge*> deepPathTree(int id);
 
       Utils::DotType getAllNodesConnected(int id);

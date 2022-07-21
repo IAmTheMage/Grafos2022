@@ -186,7 +186,8 @@ namespace Graph {
   }
 
   // b) Fecho transitivo indireto:
-  void Graph::indirectTransitiveClosure(int id) {
+  std::vector<int> Graph::indirectTransitiveClosure(int id) {
+    
     Node* target = searchById(id);
     if(target == nullptr) {
       return;
@@ -196,34 +197,21 @@ namespace Graph {
     Node* vertex = this->node;
     Node* assistant = nullptr;
     Edge* edge;
-
-    // Ideia similar ao fecho transitivo direto:
-    Utils::Dot* dot = new Utils::Dot();
-    std::string path(ROOT_DIR);
-    std::cout << path << "\n";
-    path.append("indirectTransitiveClosure.dot");
-    std::cout << path << "\n";
-    std::fstream file;
-    file.open(path, std::ios::trunc | std::ios::out);
-    if(!file.is_open()) {
-      std::cout << "NOT OPEN" << "\n";
-    }
     
-    std::cout << "Fecho transitivo indireto: ";
+    //std::cout << "Fecho transitivo indireto: ";
     while(vertex!=nullptr) {
       this->setAllNodesVisitedFalse();
       deepPath(vertex);
 
       if(target->beenVisited() && (vertex->id!=target->id)) {
         indirectClosure.push_back(vertex->id);
-        std::cout << vertex->id << " ";
+        //std::cout << vertex->id << " ";
       }
       
       vertex = vertex->getNext();
     }
 
-    file << dot->generateDotRepresentation(indirectClosure, id);
-    file.close();
+    return indirectClosure;
   }
 
   void Graph::setAllNodesVisitedFalse() {
