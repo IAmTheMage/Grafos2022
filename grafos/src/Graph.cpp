@@ -199,9 +199,6 @@ namespace Graph {
 
     // Primeiro nó do grafo
     Node* vertex = this->node;
-    // Nó assistente para as operações
-    Node* assistant = nullptr;
-    Edge* edge = nullptr;
     
     //std::cout << "Fecho transitivo indireto: ";
 
@@ -226,6 +223,7 @@ namespace Graph {
       vertex = vertex->getNext();
     }
 
+    delete vertex;
     return indirectClosure;
   }
 
@@ -238,6 +236,8 @@ namespace Graph {
       node->setVisitFalse();
       node = node->getNext();
     }
+
+    delete node;
   }
 
   // caminhamento em profundidade
