@@ -40,10 +40,10 @@ add_test(
   COMMAND $<TARGET_FILE:test5> in.txt out.txt 1 1 0
 )
 
-#add_test(
-#  NAME IndirectTransitiveClosure
- # COMMAND $<TARGET_FILE:test6> in.txt out.txt 1 1 0
-#)
+add_test(
+  NAME IndirectTransitiveClosure
+  COMMAND $<TARGET_FILE:test6> in.txt out.txt 1 1 0
+)
 
 add_test(
   NAME  ClusteringCoeficient
