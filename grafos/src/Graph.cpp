@@ -188,7 +188,6 @@ namespace Graph {
   // b) Fecho transitivo indireto:
   std::vector<int> Graph::indirectTransitiveClosure(int id) {
     // vértice o qual se procura o seu fecho transitivo indireto
-    std::cout << "1\n";
     Node* target = searchById(id);
 
     // Se o vértice não existir, retornar o vetor vazio
@@ -198,7 +197,6 @@ namespace Graph {
       return indirectClosure;
     }
 
-    std::cout << "2\n";
     // Primeiro nó do grafo
     Node* vertex = this->node;
     // Nó assistente para as operações
