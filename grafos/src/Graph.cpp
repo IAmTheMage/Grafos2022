@@ -468,6 +468,38 @@ namespace Graph {
     return path;
   }
 
+  Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
+    Graph *subGraph = new Graph(this->edgeType, this->graphType);
+    Edge *edge;
+    vertexInducedSubgraphAux(subGraph, subN);
+    return subGraph;
+  }
+
+  void Graph::vertexInducedSubgraphAux(Graph* sub, std::vector<int>& p) {
+
+    for(int b : p) {
+      Node* k = searchById(b);
+      sub->instanceNewNode(b);
+      if(k != nullptr) {
+        Edge* edge = k->getEdge();
+        while(edge != nullptr) {
+          if(std::find(p.begin(), p.end(), edge->getTo()) != p.end() && edge->getTo() != k->id) { 
+            sub->generateEdge(b, edge->getTo(), 10);
+          }
+          edge = edge->getNext();
+        }
+      }
+    }  
+  }
+
+  void Graph::generateEdge(int from, int to, int weight) {
+    Node* b = searchById(from);
+    if(b != nullptr) {
+      Edge* edge = new Edge(from, to, weight);
+      //b->makeRelationship(edge);
+    }
+  }
+
   // i) Árvore dada pelo caminhamento em profundidade:
 
   /*std::vector<Edge> Graph::deepPathTree(Node* vertex) {
