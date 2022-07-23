@@ -24,6 +24,7 @@ namespace Graph {
   class Graph {
     public:
       Graph(char** args);
+      Graph(EdgeType et, GraphType gp);
       ~Graph() {};
       int countNumberOfNodes() {return count;};
       void instanceNewNode() {
@@ -50,7 +51,9 @@ namespace Graph {
           return node->getLastBeforeNull();
         }
       }
+
       Node* searchById(int id);
+      void vertexInducedSubgraph(std::vector<int> nodes);
       std::list<int> dijkstra(int id, int destination);
       std::list<int> shortestPath(int origin ,int destination, int* predecessors);
       void directTransitiveClosure(int id);

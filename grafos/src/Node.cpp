@@ -46,10 +46,12 @@ namespace Graph {
 
   void Node::makeRelationship(int to, int weight = 0) {
     if(edgeCount == 0) {
+//      std::cout << "ID: " << this->id << " TO: " << to << " Weight: " << weight << std::endl;
       this->edge = new Edge(this->id, to, weight);
     }
     else {
       Edge* last = getLastEdgeBeforeNull();
+//      std::cout << "ID: " << this->id << " TO: " << to << " Weight: " << weight << std::endl;
       last->setNext(new Edge(this->id, to, weight));
     }
     edgeCount++;

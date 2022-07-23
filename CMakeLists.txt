@@ -55,3 +55,7 @@ add_test(
   COMMAND $<TARGET_FILE:test8> in.txt out.txt 1 1 0
 )
 
+add_test(
+  NAME  VertexInducedSubgraph
+  COMMAND $<TARGET_FILE:test9> in.txt out.txt 1 1 0
+)

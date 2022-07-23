@@ -32,6 +32,12 @@ namespace Graph {
     setFiles(in, out);
   }
 
+  Graph::Graph(EdgeType et, GraphType gp) {
+    edgeType = et;
+    graphType = gp;
+    node = nullptr;
+  }
+
   Node* Graph::searchById(int id) {
     Node* t = this->node;
     Node* p = nullptr;
@@ -467,6 +473,78 @@ namespace Graph {
     path.push_front(origin);
     return path;
   }
+
+
+  void Graph::vertexInducedSubgraph(std::vector<int> subN) {
+    Graph *subGraph = new Graph(this->edgeType, this->graphType);
+    Edge *edge;
+
+    for(int i = 0;i < subN.size();i++) {
+      Node *nodeO;
+      nodeO = subGraph->searchById(subN[i]);
+      
+      if(nodeO == nullptr) 
+      {
+//        std::cout << "instanciando o no " << subN[i] << std::endl;
+        nodeO = subGraph->instanceNewNode(subN[i]);
+        nodeO->setPosition(subGraph->count - 1);
+      }
+
+      edge = this->searchById(subN[i])->getEdge();
+      while(edge != NULL) //Verifcar se a aresta está no GRAFO;
+      {
+          for(int j = 0;j < subN.size();j++) {
+            if(edge->getTo() == subN[j]) 
+            {
+              Node* nodeD = subGraph->searchById(subN[j]);
+              if(nodeD == nullptr) 
+              {
+//                std::cout << "instanciando o no " << subN[j] << std::endl;
+                nodeD = subGraph->instanceNewNode(subN[j]);
+                nodeD->setPosition(subGraph->count - 1);
+              }
+
+            std::cout << nodeO->id << "-->" << nodeD->id << "--" << edge->getWeight() << std::endl;
+//            nodeO->makeRelationship(nodeD->id, edge->getWeight());
+
+            }
+          }
+
+        edge = edge->getNext();
+      }
+    }
+    
+
+  }
+
+    // for(int i = 0;i < subN.size();i++) { 
+    //  node = subGraph->searchById(subN[i]);
+    //   if(node == nullptr) {
+    //     std::cout << "instanciando o no " << subN[i] << std::endl;
+    //     node = subGraph->instanceNewNode(subN[i]);
+    //     node->setPosition(subGraph->count - 1);
+    //   }
+    //   for(edge = this->searchById(subN[i])->getEdge();edge != nullptr; edge = edge->getNext()) 
+    //   { 
+    //     for(int j = 0;j < subN.size();j++)
+    //     {
+    //       if(edge->getTo() == subN[j]) 
+    //       {
+    //       node2 = subGraph->searchById(edge->getTo()); 
+    //           if(node2 == nullptr)
+    //           {
+    //             node2 = subGraph->instanceNewNode(edge->getTo());
+    //             node2->setPosition(subGraph->count - 1);
+    //           }
+    //         std::cout << subGraph->searchById(subN[i])->id << "-->" << node2->id << std::endl;
+    //         node->makeRelationship(node2->id, edge->getWeight());
+    //       }
+    //     }
+    //   }
+    // }
+
+
+
 
   // i) Árvore dada pelo caminhamento em profundidade:
 
