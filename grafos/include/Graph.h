@@ -24,6 +24,11 @@ namespace Graph {
   class Graph {
     public:
       Graph(char** args);
+      Graph(EdgeType edge, GraphType graph) {
+        this->edgeType = edge;
+        this->graphType = graph;
+        node = nullptr;
+      }
       ~Graph() {};
       int countNumberOfNodes() {return count;};
       void instanceNewNode() {
@@ -66,12 +71,16 @@ namespace Graph {
       int** generateArrayRepresentation();
       int** initPred();
 
+      Graph* vertexInducedSubgraph(std::vector<int> nodes);
+      void generateEdge(int from, int to, int weight);
+      void vertexInducedSubgraphAux(Graph* sub, std::vector<int>& p);
+
       void setAllNodesVisitedFalse();
       void generateGraphVizRepresentation();
       int getNodeReferenceIndex(int id); 
       void deepPath(Node* node);
       void print() {
-        std::cout << "Initialize Print directive: " << "\n";
+        std::cout << "Initialize Print directive sdsda: " << "\n";
         Node* p = node;
         while(p != nullptr) {
           std::cout << p->id << " ";
