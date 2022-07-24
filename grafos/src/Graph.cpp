@@ -4,6 +4,8 @@
 #include "algorithm"
 #include "config.h"
 
+#define INF 99999999
+
 #ifdef LINUX
 #include "sys/types.h"
 #include "sys/sysinfo.h"
@@ -472,13 +474,88 @@ namespace Graph {
     return path;
   }
 
+  void Graph::algorithmPrim(Graph* subgraph) {
+    
+    int order = subgraph->countNumberOfNodes();
+
+    std::vector<int> distance;
+    distance.clear();
+
+    //Vector que verifica se o nó já foi visitado;
+    std::vector<bool> visited(order, false);
+
+    //O primeiro inicializado com 0 e os demais com INF;
+    distance.push_back(0);
+    for(int i = 0;i < order;i++) distance.push_back(INF);
+
+    //Vector com os pais de cada nó, -1 caso não tenha pai;
+    std::vector<int> parent(order, -1);
+
+    for(int i = 0;i < order;i++) 
+    {
+      int minor_p = auxPrim(distance, visited);
+      Node* node = subgraph->getNodeByPosition(i);
+      
+      visited[minor_p] = true;
+
+      //Percorrer cada aresta do nó
+      Edge* edge = node->getEdge();
+      int j = 0;
+      while(j < node->getEdgeCount()) 
+      {
+        int v = edge->getTo();
+        int pos_v = subgraph->searchById(v)->getPosition();
+        int weigth = edge->getWeight();
+
+        if(!visited[pos_v] && distance[pos_v] > weigth) {
+          distance[pos_v] = weigth;
+          parent[pos_v] = edge->getFrom();
+        }
+        edge = edge->getNext();
+        j++;
+      }
+    }
+  }
+
+  int Graph::auxPrim(std::vector<int> distance, std::vector<bool> visited) {
+    int min = INF;
+    int pos;
+    bool tem_pos = false;
+    for (int i = 0; i < distance.size(); i++)
+    {
+        if (distance[i] < min && visited[i] == false)
+        {
+            min = distance[i];
+            pos = i;
+            tem_pos = true;
+        }
+    }
+    if (tem_pos)
+        return pos;
+    else
+    {
+        for (int i = 0; i < distance.size(); i++)
+        {
+            if (distance[i] == min && visited[i] == false)
+            {
+                min = distance[i];
+                pos = i;
+                tem_pos = true;
+                return pos;
+            }
+        }
+    }
+    return pos;
+  }
+
   Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
     std::vector<Relation> relations;
     Graph* graph = new Graph(this->edgeType, this->graphType);
     for(int b : subN) {
       Node* k = searchById(b);
       if(k != nullptr) {
-        graph->instanceNewNode(k->id);
+        k = graph->instanceNewNode(k->id);
+        k->setPosition(graph->count - 1);
       }
       else {
         continue;
@@ -505,52 +582,52 @@ namespace Graph {
     return false;
   }
 
-  void Graph::kruskal(Graph* subGraph) {
-    std::vector<std::pair<int, std::pair<int, int>>> edges;
-    subGraph->cleanVisited();
-    Node* p = subGraph->getNode();
-    Edge* edge = p->getEdge();
-    int u = p->id;
-    int v;
-    if(edge != nullptr) {
-      v = edge->getTo();
-    }
-    for(int i = 0; i < subGraph->getCount(); i++) {
-      if(edge == nullptr) {
-        edges.push_back(INT_MAX, {u, u});
-      }
-      while(edge != nullptr) {
-        if(!subGraph->searchById(v)->beenVisited()) {
-          edges.push_back(edge->getWeight(), {u, v});
-        }
-        edge = edge->getNext();
-        if(edge != nullptr) {
-          v = edge->getTo();
-        }
-      }
-      p->visited();
-      p = subGraph->getNodeByPosition(i);
-      edge = p->getEdge();
-      u = p->id;
-      if(edge != nullptr) {
-        v = edge->getTo();
-      }
-    }
-    std::sort(edges.begin(), edges.end());
-    SubTree* subTrees = new SubTree[(sizeof(SubTree) * subGraph->getCount())];
-    for(int i = 0; i < subGraph->getCount(); i++) {
-      subTrees[i].father = i;
-      subTrees[i].order = 1;
-    }
+  // void Graph::kruskal(Graph* subGraph) {
+  //   std::vector<std::pair<int, std::pair<int, int>>> edges;
+  //   subGraph->cleanVisited();
+  //   Node* p = subGraph->getNode();
+  //   Edge* edge = p->getEdge();
+  //   int u = p->id;
+  //   int v;
+  //   if(edge != nullptr) {
+  //     v = edge->getTo();
+  //   }
+  //   for(int i = 0; i < subGraph->getCount(); i++) {
+  //     if(edge == nullptr) {
+  //       edges.push_back(INT_MAX, {u, u});
+  //     }
+  //     while(edge != nullptr) {
+  //       if(!subGraph->searchById(v)->beenVisited()) {
+  //         edges.push_back(edge->getWeight(), {u, v});
+  //       }
+  //       edge = edge->getNext();
+  //       if(edge != nullptr) {
+  //         v = edge->getTo();
+  //       }
+  //     }
+  //     p->visited();
+  //     p = subGraph->getNodeByPosition(i);
+  //     edge = p->getEdge();
+  //     u = p->id;
+  //     if(edge != nullptr) {
+  //       v = edge->getTo();
+  //     }
+  //   }
+  //   std::sort(edges.begin(), edges.end());
+  //   SubTree* subTrees = new SubTree[(sizeof(SubTree) * subGraph->getCount())];
+  //   for(int i = 0; i < subGraph->getCount(); i++) {
+  //     subTrees[i].father = i;
+  //     subTrees[i].order = 1;
+  //   }
 
-    std::vector<int> minTree;
-    int cont = 0;
-    while(minTree.size() < subGraph->count() - 1 && cont < edges.size()) {
-      pair<int, int> nextEdge = edges[cont].second;
-      int first = nextEdge.first;
-      int second = nextEdge.second;
-      if(first == second) minTree.push_back(cont);
+  //   std::vector<int> minTree;
+  //   int cont = 0;
+  //   while(minTree.size() < subGraph->count() - 1 && cont < edges.size()) {
+  //     std::pair<int, int> nextEdge = edges[cont].second;
+  //     int first = nextEdge.first;
+  //     int second = nextEdge.second;
+  //     if(first == second) minTree.push_back(cont);
       
-    }
-  }
+  //   }
+  // }
 }

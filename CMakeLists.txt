@@ -55,3 +55,8 @@ add_test(
   COMMAND $<TARGET_FILE:test8> in.txt out.txt 1 1 0
 )
 
+add_test(
+  NAME  AgmPrim
+  COMMAND $<TARGET_FILE:test10> in.txt out.txt 1 1 0
+)
+

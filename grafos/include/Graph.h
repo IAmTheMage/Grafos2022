@@ -97,6 +97,8 @@ namespace Graph {
         return this->count;
       }
 
+      void algorithmPrim(Graph* subgraph);
+      int auxPrim(std::vector<int> distance, std::vector<bool> visited);
       Graph* vertexInducedSubgraph(std::vector<int> nodes);
       void generateEdge(int from, int to, int weight);
       void vertexInducedSubgraphAux(Graph* sub, std::vector<int>& p);
