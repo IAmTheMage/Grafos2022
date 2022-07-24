@@ -5,7 +5,7 @@ using namespace std;
 #include "Graph.h"
 int main(int argc, char *argv[])
 {
-  Graph::Graph* graph = new Graph::Graph(argv);
+  Graph::Graph *graph = new Graph::Graph(argv);
   graph->generateGraphVizRepresentation();
   graph->print();
   return -1;

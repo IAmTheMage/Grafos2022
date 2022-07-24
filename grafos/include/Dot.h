@@ -1,6 +1,9 @@
 #include "string"
 #include "vector"
 #include "fstream"
+#include "Edge.h"
+
+using Graph::Edge;
 
 namespace Utils {
   #ifndef DOT
@@ -32,9 +35,11 @@ namespace Utils {
       void outputDotRepresentation(Utils::DotType p);
       void consoleDotRepresentation(Utils::DotType p);
       void startGraph(std::string path);
+      void startGraph(std::string path, bool digraph);
       void generateGraphRepresentation(Utils::DotType p);
       void endGraph();
       void writeOnFile(std::string filePath, std::vector<WeightedDot> p, bool digraph); 
+      void writeOnFile(Edge* edge);
       void begin() {
         data.append("digraph D {\n");
         of << this->data;

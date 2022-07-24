@@ -14,7 +14,6 @@
 namespace Graph {
   Graph::Graph(char** args) {
     dt = new Utils::Dot();
-    std::cout << "Instance new graph" << std::endl;
     if(strcmp(args[4], "1") == 0) {
       edgeType = EdgeType::PONDERED;
     }
@@ -44,6 +43,14 @@ namespace Graph {
     }
     return p;
   }
+  
+  Graph::Graph(EdgeType edge, GraphType graph) {
+    this->edgeType = edge;
+    this->graphType = graph;
+    this->node = nullptr;
+    this->count = 0;
+    dt = new Utils::Dot();
+  }
 
   void Graph::setFiles(std::string in, std::string out) {
     std::string path(ROOT_DIR);
@@ -72,8 +79,10 @@ namespace Graph {
             s->setPosition(this->count - 1);
           }
           p->makeRelationship(values[1], values[2]);
+          
           if(graphType == GraphType::NONDIRECTED) {
             s->makeRelationship(values[0], values[2]);
+            
           }
           values.clear();
         }
@@ -98,13 +107,7 @@ namespace Graph {
           values.clear();
         }
       }
-      std::fstream of;
-      std::string path(ROOT_DIR);
-      path.append("graph.dot");
-      of.open(path, std::ios::trunc | std::ios::out);
-      Utils::Dot* dot = new Utils::Dot();
-      //of << dot->generateDotRepresentation(generateDotTypeVector());
-      of.close();
+      ip.close();
     }
     else {
       std::cout << "Is close" << "\n";
@@ -117,9 +120,10 @@ namespace Graph {
     std::vector<Utils::WeightedDot> dots;
     Node* p = node;
     Edge* edge = nullptr;
+    int index = 0;
     while(p != nullptr) {
       edge = p->getEdge();
-      while(edge != nullptr) {
+      for(int i = 0; i < p->getEdgeCount();i++) {
         Utils::WeightedDot dot;
         dot.origin = p->id;
         dot.destination = edge->getTo();
@@ -469,55 +473,84 @@ namespace Graph {
   }
 
   Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
-    Graph *subGraph = new Graph(this->edgeType, this->graphType);
-    Edge *edge;
-    vertexInducedSubgraphAux(subGraph, subN);
-    return subGraph;
-  }
-
-  void Graph::vertexInducedSubgraphAux(Graph* sub, std::vector<int>& p) {
-
-    for(int b : p) {
+    std::vector<Relation> relations;
+    Graph* graph = new Graph(this->edgeType, this->graphType);
+    for(int b : subN) {
       Node* k = searchById(b);
-      sub->instanceNewNode(b);
       if(k != nullptr) {
-        Edge* edge = k->getEdge();
-        while(edge != nullptr) {
-          if(std::find(p.begin(), p.end(), edge->getTo()) != p.end() && edge->getTo() != k->id) { 
-            sub->generateEdge(b, edge->getTo(), 10);
-          }
-          edge = edge->getNext();
+        graph->instanceNewNode(k->id);
+      }
+      else {
+        continue;
+      }
+    }
+    for(int b : subN) {
+      Node* searched = graph->searchById(b);
+      for(int h : subN) {
+        if(h != b && edgeExists(b, h)) {
+          Edge* edge = searchById(b)->searchEdge(h);
+          int weight = 0;
+          if(edge != nullptr) weight = edge->getWeight();
+          searched->makeRelationship(h, weight);
         }
       }
-    }  
-  }
-
-  void Graph::generateEdge(int from, int to, int weight) {
-    Node* b = searchById(from);
-    if(b != nullptr) {
-      Edge* edge = new Edge(from, to, weight);
-      //b->makeRelationship(edge);
     }
+    return graph;
   }
 
-  // i) Árvore dada pelo caminhamento em profundidade:
+  bool Graph::edgeExists(int from, int to) {
+    Node* k = searchById(from);
+    if(k == nullptr) return false;
+    if(k->searchEdge(to) != nullptr) return true;
+    return false;
+  }
 
-  /*std::vector<Edge> Graph::deepPathTree(Node* vertex) {
-    vertex->visited();
-    Node* assistant = nullptr;
-    Edge* edgeAssistant = vertex->getEdge();
-
-    std::allocator<Edge> aloc;
-    std::vector<Edge, std::allocator<Edge>> edgesOfDeepPathTree;
-
-    while(edgeAssistant != nullptr) {
-      assistant = searchById(edgeAssistant->getTo());
-      if(!assistant->beenVisited()) {
-        edgesOfDeepPathTree.push_back(edgeAssistant, aloc);
-        edgesOfDeepPathTree.push_back(deepPathTree(assistant), aloc);
+  void Graph::kruskal(Graph* subGraph) {
+    std::vector<std::pair<int, std::pair<int, int>>> edges;
+    subGraph->cleanVisited();
+    Node* p = subGraph->getNode();
+    Edge* edge = p->getEdge();
+    int u = p->id;
+    int v;
+    if(edge != nullptr) {
+      v = edge->getTo();
+    }
+    for(int i = 0; i < subGraph->getCount(); i++) {
+      if(edge == nullptr) {
+        edges.push_back(INT_MAX, {u, u});
+      }
+      while(edge != nullptr) {
+        if(!subGraph->searchById(v)->beenVisited()) {
+          edges.push_back(edge->getWeight(), {u, v});
+        }
+        edge = edge->getNext();
+        if(edge != nullptr) {
+          v = edge->getTo();
+        }
+      }
+      p->visited();
+      p = subGraph->getNodeByPosition(i);
+      edge = p->getEdge();
+      u = p->id;
+      if(edge != nullptr) {
+        v = edge->getTo();
       }
     }
+    std::sort(edges.begin(), edges.end());
+    SubTree* subTrees = new SubTree[(sizeof(SubTree) * subGraph->getCount())];
+    for(int i = 0; i < subGraph->getCount(); i++) {
+      subTrees[i].father = i;
+      subTrees[i].order = 1;
+    }
 
-    return edgesOfDeepPathTree;
-  }*/
+    std::vector<int> minTree;
+    int cont = 0;
+    while(minTree.size() < subGraph->count() - 1 && cont < edges.size()) {
+      pair<int, int> nextEdge = edges[cont].second;
+      int first = nextEdge.first;
+      int second = nextEdge.second;
+      if(first == second) minTree.push_back(cont);
+      
+    }
+  }
 }

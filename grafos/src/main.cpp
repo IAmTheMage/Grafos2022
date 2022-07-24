@@ -3,9 +3,9 @@
 #include "../include/Graph.h"
 
 int main(int argc, char** argv) {
-  Graph::Graph* graph = new Graph::Graph(argv);
+  /*Graph::Graph* graph = new Graph::Graph(argv);
   graph->instanceNewNode();
   graph->instanceNewNode();
-  std::cout << graph->countNumberOfNodes() << std::endl;
+  std::cout << graph->countNumberOfNodes() << std::endl;*/
   return 0;
 }

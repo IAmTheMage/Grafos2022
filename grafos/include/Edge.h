@@ -1,3 +1,5 @@
+#include "iostream"
+
 namespace Graph {
   #ifndef EDGE
   #define EDGE
@@ -8,6 +10,18 @@ namespace Graph {
         this->to = to;
         this->weight = weight;
       };
+
+      void makeFromChain(Edge* edge) {
+        Edge* b = nullptr;
+        while(edge != nullptr) {
+          b = getLast();
+          b->setNext(new Edge(edge->getFrom(), edge->getTo(), edge->getWeight()));
+          b = b->getNext();
+          edge = edge->getNext();
+        }
+      }
+
+
       ~Edge();
       Edge* getNext() {
         return this->next;
@@ -23,12 +37,32 @@ namespace Graph {
       }
       void setNext(Edge* edge) {
         this->next = edge;
+        count++;
       };
+
+      void setNextBeforeNull(Edge* edge) {
+        Edge* b = nullptr;
+        Edge* s = this;
+        while(s != nullptr) {
+          b = s;
+          s = s->getNext();
+        }
+        b->setNext(edge);
+      }
+
+      Edge* getLast() {
+        Edge* edge = this;
+        for(int i = 0; i < count; i++) {
+          edge = edge->getNext();
+        }
+        return edge;
+      }
     private:
       Edge* next;
       int weight;
       int from;
       int to;
+      int count = 0;
   };
   #endif
 }

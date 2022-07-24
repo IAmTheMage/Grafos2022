@@ -53,6 +53,11 @@ namespace Utils {
     oof << "}\n";
   }
 
+  void Dot::writeOnFile(Edge* edge) {
+    std::cout << "Write edge: " << edge->getTo() << "\n";
+    of << edge->getFrom() << " -> " << edge->getTo() << " [weight=" << edge->getWeight() << "]\n";
+  }
+
   void Dot::startGraph(std::string path) {
     std::cout << path << "\n";
     of.open(path, std::ios::trunc | std::ios::out);
@@ -61,6 +66,16 @@ namespace Utils {
     }
     data.append("digraph D {\n");
     of << data;
+  }
+
+  void Dot::startGraph(std::string path, bool digraph) {
+    of.open(path, std::ios::trunc | std::ios::out);
+    if(digraph) {
+      data.append("digraph {\n");
+    }
+    else {
+      data.append("graph {\n");
+    }
   }
 
   void Dot::generateDotRepresentation(DotType p) {

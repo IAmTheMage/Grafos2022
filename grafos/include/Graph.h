@@ -21,14 +21,21 @@ namespace Graph {
     PONDERED, NONPONDERED
   };
 
+  struct Relation {
+    int from;
+    int to = 0;
+    int weight;
+  };
+
+  struct SubTree {
+    int father;
+    int order;
+  };
+
   class Graph {
     public:
-      Graph(char** args);
-      Graph(EdgeType edge, GraphType graph) {
-        this->edgeType = edge;
-        this->graphType = graph;
-        node = nullptr;
-      }
+      Graph(char** argv);
+      Graph(EdgeType edge, GraphType graph);
       ~Graph() {};
       int countNumberOfNodes() {return count;};
       void instanceNewNode() {
@@ -44,7 +51,8 @@ namespace Graph {
 
       Node* instanceNewNode(int id) {
         if(count == 0) {
-          node = Node::make(id);
+          node = new Node();
+          node->id = id;
           count++;
           return node;
         }
@@ -58,6 +66,7 @@ namespace Graph {
       Node* searchById(int id);
       std::list<int> dijkstra(int id, int destination);
       std::list<int> shortestPath(int origin ,int destination, int* predecessors);
+      bool edgeExists(int from, int to);
       void directTransitiveClosure(int id);
       void indirectTransitiveClosure(int id);
       Utils::DotType getAllNodesConnected(int id);
@@ -71,6 +80,23 @@ namespace Graph {
       int** generateArrayRepresentation();
       int** initPred();
 
+      void kruskal(Graph* subGraph);
+      void cleanVisited() {
+        Node* p = node;
+        while(p != nullptr) {
+          p->setVisitFalse();
+          p = p->getNext();
+        }
+      }
+
+      Node* getNode() {
+        return this->node;
+      }
+
+      int getCount() {
+        return this->count;
+      }
+
       Graph* vertexInducedSubgraph(std::vector<int> nodes);
       void generateEdge(int from, int to, int weight);
       void vertexInducedSubgraphAux(Graph* sub, std::vector<int>& p);
@@ -80,7 +106,7 @@ namespace Graph {
       int getNodeReferenceIndex(int id); 
       void deepPath(Node* node);
       void print() {
-        std::cout << "Initialize Print directive sdsda: " << "\n";
+        std::cout << "Initialize Print directive: " << "\n";
         Node* p = node;
         while(p != nullptr) {
           std::cout << p->id << " ";
@@ -97,7 +123,7 @@ namespace Graph {
 
       //std::vector<Edge> deepPathTree(Node* vertex);
 
-      std::ifstream fs;
+      std::ifstream ip;
       std::vector<int> visited;
       Utils::Dot* dt;
   };
