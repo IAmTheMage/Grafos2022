@@ -114,9 +114,14 @@ namespace Graph {
     }
   }
 
+  /**
+   * @brief Função para gerar a representação em .dot do grafo
+   * 
+   */
   void Graph::generateGraphVizRepresentation() {
     std::string filePath(ROOT_DIR);
     filePath.append("graph.dot");
+    //Vetor de refêrencia para gerar o dot
     std::vector<Utils::WeightedDot> dots;
     Node* p = node;
     Edge* edge = nullptr;
@@ -124,16 +129,37 @@ namespace Graph {
     while(p != nullptr) {
       edge = p->getEdge();
       for(int i = 0; i < p->getEdgeCount();i++) {
-        Utils::WeightedDot dot;
-        dot.origin = p->id;
-        dot.destination = edge->getTo();
-        dot.weight = edge->getWeight();
-        dots.push_back(dot);
+        //Algoritmo que pega todas as arestas, verifica se elas não repetem e caso não,
+        //adiciona no vetor de refêrencia
+        if(!searchDots(dots, p->id, edge->getTo())) {
+          Utils::WeightedDot dot;
+          dot.origin = p->id;
+          dot.destination = edge->getTo();
+          dot.weight = edge->getWeight();
+          dots.push_back(dot);
+        }
         edge = edge->getNext();
       }
       p = p->getNext();
     }
-    dt->writeOnFile(filePath, dots, true);
+    if(graphType == DIRECTED) {
+      //Metodo para gerar o dot
+      dt->writeOnFile(filePath, dots, true);
+    }
+    else {
+      //Metodo para gerar o dot
+      dt->writeOnFile(filePath, dots, false);
+    }
+  }
+
+  bool Graph::searchDots(std::vector<Utils::WeightedDot>& p, int from, int to) {
+    for(auto b : p) {
+      if((b.origin == from && b.destination == to) || (b.origin == to && b.destination == from )) {
+        std::cout << "Ja processado: " << from << ":" << to << std::endl;
+        return true;
+      }
+    }
+    return false;
   }
 
   void Graph::directTransitiveClosure(int id) {
@@ -163,7 +189,14 @@ namespace Graph {
     visited.clear();
   }
 
+  /**
+   * @brief Pega todos os nós conectados com o nó selecionado
+   * 
+   * @param id 
+   * @return Utils::DotType 
+   */
   Utils::DotType Graph::getAllNodesConnected(int id) {
+    //Cria um value para a classe dot gerar o arquivo .dot
     Utils::DotType value;
     value.id = id;
     visited.push_back(id);
@@ -248,6 +281,14 @@ namespace Graph {
     }
   }
 
+  /**
+   * @brief Retorna o numero de vizinhos conectados entre si de um vértice
+   * 
+   * @param id 
+   * @param p 
+   * @param size 
+   * @return int 
+   */
   int Graph::neighborsConnected(int id, int* p, int size) {
     Node* s = searchById(id);
     Edge* edge = s->getEdge();
@@ -265,12 +306,20 @@ namespace Graph {
     return count;
   }
 
+  /**
+   * @brief Algoritmo para encontrar o coeficiente de agrupamento local de um vértice do grafo
+   * 
+   * @param id 
+   * @return float 
+   */
   float Graph::clusteringCoeficient(int id) {
     Node* s = searchById(id);
     Edge* edge = s->getEdge();
+    //Array para colocar os ids dos vértices connectados com o nó original
     int* connected = new int[s->getEdgeCount()];
     int clustering = 0;
     int index = 0;
+    //Coloca todos os ids dos destinos das arestas em do nó selecinado em connected
     while(edge != nullptr) {
       connected[index] = edge->getTo();
       index++;
@@ -279,21 +328,37 @@ namespace Graph {
     for(int i = 0; i < index; i++) {
       clustering += neighborsConnected(connected[i], connected, index);
     }
-    if(s->getEdgeCount() == 0) return 0;
-    float clusteringRealValue = (float)((float)clustering/s->getEdgeCount());
+    if(s->getEdgeCount() == 0 || clustering == 0) return 0;
+    float clusteringRealValue = (float)((float)clustering / (s->getEdgeCount() * (s->getEdgeCount() - 1) / 2));
+    if(graphType == DIRECTED) {
+      clusteringRealValue *= 0.5;
+    }
     return clusteringRealValue;
   }
 
+  /**
+   * @brief Encontra o coeficiente médio do grafo
+   * 
+   * @return float 
+   */
   float Graph::clusteringGlobalCoeficient() {
+    //Apenas soma todos os coeficientes locais do grafo em uma váriavel e retorna ela
     float sum = 0.0;
     Node* p = this->node;
     while(p != nullptr) {
       sum += clusteringCoeficient(p->id);
       p = p->getNext();
     }
-    return sum;
+    return sum / getCount();
   }
 
+  /**
+   * @brief Pega a posição de um node baseado no id
+   * @deprecated em favor de searchNodeById(id)->getPosition()
+   * 
+   * @param id 
+   * @return int 
+   */
   int Graph::getNodeReferenceIndex(int id) {
     Node* p = node;
     int index = 0;
@@ -306,6 +371,10 @@ namespace Graph {
     exit(0);
   }
 
+  /**
+    * Seleciona um vértice baseado na posição dele dentro da lista encadeada
+    * 
+  */
   Node* Graph::getNodeByPosition(int id) {
     Node* p = node;
     for(int i = 0; i < id; i++) {
@@ -314,7 +383,13 @@ namespace Graph {
     return p;
   }
 
+  /**
+   * @brief Algoritmo de dijkstra para buscar caminho minimo entre todos os vértices
+   * @param origin
+   * @param destination
+  */
   std::list<int> Graph::dijkstra(int origin, int destination) {
+    //Inicia todas as distâncias como 'Infinito'
     int* dist = new int[this->count];
     bool* visited = new bool[this->count];
     int* predecessor = new int[this->count];
@@ -355,7 +430,12 @@ namespace Graph {
     return shortestPath(origin, destination, predecessor);
   }
 
+
+  /**
+   * @brief Função para gerar uma representação matricial do grafo para floyd
+  */
   int** Graph::generateArrayRepresentation() {
+    //Inicia as distâncias na matriz como 'Infinito'
     int** dists = new int*[count];
     for(int i = 0; i < count; i++) {
       dists[i] = new int[count];
@@ -367,6 +447,8 @@ namespace Graph {
         dists[i][j] = INT_MAX;
       }
     }
+
+    //Trocando a distância de 'INFINITO' para o peso correspondente das arestas
     Node* p = nullptr;
     Edge* edge = nullptr;
     for(int i = 0; i < count; i++) {
@@ -386,18 +468,6 @@ namespace Graph {
     int** pred = initPred();
     int k, i, j;
     std::list<int> reList;
-    for(int i = 0; i < count; i++) {
-      for(int j = 0; j < count; j++) {
-        if(dists[i][j] == INT_MAX) {
-          std::cout << "I" << " ";
-          continue;
-        }
-        else {
-          std::cout << dists[i][j] << " ";
-        }
-      }
-      std::cout << std::endl;
-    }
     for (k = 0; k < count; k++) {
       for (i = 0; i < count; i++) {
         for (j = 0; j < count; j++) {
@@ -423,6 +493,8 @@ namespace Graph {
     return reList;
   }
 
+
+  //Função para printar Floyd
   void Graph::floydOut(std::list<int>& p, int** pred, int origin, int destination) {
     int predecessor;
     Node* n = searchById(origin);
@@ -448,6 +520,12 @@ namespace Graph {
     std::cout << "Finalizado" << std::endl;
   }
 
+  /**
+   * @brief Função
+   * 
+   * @param from 
+   * @param to
+  */
   int** Graph::initPred() {
     int** temp = new int*[count];
     for(int i = 0; i < count; i++) {
@@ -460,25 +538,42 @@ namespace Graph {
     return temp;
   }
 
+  /**
+   * @brief Algoritmo para gerar uma lista contendo o caminho entre a origem e o destino
+   * 
+   * @param origin 
+   * @param destination
+   * @param predecessors
+  */
   std::list<int> Graph::shortestPath(int origin, int destination, int* predecessors) {
     std::list<int> path;
+    //Adiciona o destino na frente da lista
     path.push_front(destination);
     int ver = getNodeReferenceIndex(destination);
+    //Adiciona os antecessores de cada vertice na lista até 1 deles ser igual a origem
     while(predecessors[ver] != origin) {
       path.push_front(predecessors[ver]);
       ver = getNodeReferenceIndex(predecessors[ver]);
     }
+    //Adiciona a origem na lista
     path.push_front(origin);
     return path;
   }
 
+
+  /**
+   * @brief Algoritmo que gera um subgrafo vértice induzido do grafo original
+   * 
+   * @param subN
+   */
   Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
     std::vector<Relation> relations;
     Graph* graph = new Graph(this->edgeType, this->graphType);
     for(int b : subN) {
       Node* k = searchById(b);
       if(k != nullptr) {
-        graph->instanceNewNode(k->id);
+        Node* nNode = graph->instanceNewNode(k->id);
+        nNode->setPosition(graph->getCount());
       }
       else {
         continue;
@@ -498,6 +593,12 @@ namespace Graph {
     return graph;
   }
 
+  /**
+   * @brief Algoritmo para verificar a existência de uma aresta entre dois vértices
+   * 
+   * @param from 
+   * @param to
+   */
   bool Graph::edgeExists(int from, int to) {
     Node* k = searchById(from);
     if(k == nullptr) return false;
@@ -507,50 +608,275 @@ namespace Graph {
 
   void Graph::kruskal(Graph* subGraph) {
     std::vector<std::pair<int, std::pair<int, int>>> edges;
+    edges.clear();
     subGraph->cleanVisited();
-    Node* p = subGraph->getNode();
-    Edge* edge = p->getEdge();
-    int u = p->id;
+    Node *tempNode = subGraph->getNode();
+    Edge *edge = tempNode->getEdge();
+    int u = tempNode->id;
     int v;
+
     if(edge != nullptr) {
       v = edge->getTo();
     }
-    for(int i = 0; i < subGraph->getCount(); i++) {
+    for(int i = 1; i < subGraph->getCount(); i++) {
       if(edge == nullptr) {
-        edges.push_back(INT_MAX, {u, u});
+        edges.push_back({INT_MAX, {u, u}});
       }
-      while(edge != nullptr) {
+      for(int index = 0; index < tempNode->getEdgeCount(); index++) {
         if(!subGraph->searchById(v)->beenVisited()) {
-          edges.push_back(edge->getWeight(), {u, v});
+          edges.push_back({edge->getWeight(), {u, v}});
         }
         edge = edge->getNext();
         if(edge != nullptr) {
           v = edge->getTo();
         }
       }
-      p->visited();
-      p = subGraph->getNodeByPosition(i);
-      edge = p->getEdge();
-      u = p->id;
+      tempNode->visited();
+      tempNode = tempNode->getNext();
+      edge = tempNode->getEdge();
+      u = tempNode->id;
       if(edge != nullptr) {
         v = edge->getTo();
       }
     }
+    std::cout << "Finish 1 part" << std::endl;
     std::sort(edges.begin(), edges.end());
+    std::cout << "Finish 2 part" << std::endl;
     SubTree* subTrees = new SubTree[(sizeof(SubTree) * subGraph->getCount())];
     for(int i = 0; i < subGraph->getCount(); i++) {
       subTrees[i].father = i;
       subTrees[i].order = 1;
     }
-
+    std::cout << "Finish 3 part" << std::endl;
     std::vector<int> minTree;
     int cont = 0;
-    while(minTree.size() < subGraph->count() - 1 && cont < edges.size()) {
-      pair<int, int> nextEdge = edges[cont].second;
-      int first = nextEdge.first;
-      int second = nextEdge.second;
-      if(first == second) minTree.push_back(cont);
+    while(minTree.size() < subGraph->getCount() - 1 && cont < edges.size()) {
+      std::pair<int, int> nextEdge = edges[cont].second;
       
+      int u = nextEdge.first;
+      int v = nextEdge.second;
+      if(u == v) minTree.push_back(cont);
+      if (witchSubTree(subTrees, subGraph->searchById(u)->getPosition()) != witchSubTree(subTrees, subGraph->searchById(v)->getPosition()))
+      {
+          minTree.push_back(cont);
+          joinSubTrees(subTrees, subGraph->searchById(u)->getPosition(), subGraph->searchById(v)->getPosition());
+      }
+      cont++;
+    }
+    std::cout << "Finish 4 part" << std::endl;
+    subGraph->cleanVisited();
+    //printKruskal(edges, minTree, "kruskal.dot");
+  }
+
+  void Graph::printKruskal(std::vector<std::pair<int,
+   std::pair<int, int>>> &edges, 
+   std::vector<int> &mgt, std::string filePath) {
+    std::cout << "ARVORE GERADORA MINIMA VIA KRUSKAL\n";
+    std::string data;
+    int weight = 0;
+    std::string realFilePath(ROOT_DIR);
+    realFilePath.append(filePath.c_str());
+    std::ofstream oof(realFilePath, std::ios::out | std::ios::trunc);
+    if(graphType == DIRECTED) {
+      oof << "digraph {\n";
+    }
+    else {
+      oof << "graph {\n";
+    }
+    for(int i = 0; i < mgt.size(); i++) {
+      if(edges[mgt[i]].second.first == edges[mgt[i]].second.second) {
+        oof << " " << edges[mgt[i]].second.first << std::endl;
+      }
+      else {
+        oof << edges[mgt[i]].second.first << " -> " << edges[mgt[i]].second.second;
+        oof << " [weight = " << edges[mgt[i]].first << "]" << std::endl;
+        weight += edges[mgt[i]].first;
+      }
+    }
+    oof << "}\n";
+  }
+
+  int Graph::witchSubTree(SubTree subTree[], int n) {
+    if(subTree[n].father != n)
+      subTree[n].father = witchSubTree(subTree, subTree[n].father);
+    return subTree[n].father;
+  }
+
+  void Graph::joinSubTrees(SubTree subTree[], int u, int v) {
+    int subU = witchSubTree(subTree, u);
+    int subV = witchSubTree(subTree, v);
+    if(subTree[subU].order < subTree[subV].order) {
+      subTree[subU].father = subV;
+    }
+    else if(subTree[subU].order > subTree[subV].order) {
+      subTree[subV].father = subU;
+    }
+    else {
+      subTree[subV].father = subU;
+      subTree[subU].order += subTree[subV].order;
     }
   }
+
+  std::vector<Edge*> Graph::deepPathTree(int id) {
+    // Nó do vértice raiz da árvore
+    Node* vertex = searchById(id);
+    // arestas de retorno
+    std::vector<Edge*> returnEdges;
+
+    // Se o vértice não existir, retornar a lista de arestas vazia
+    if(vertex==nullptr) {
+      return returnEdges;
+    }
+
+    std::string path(ROOT_DIR);
+    path.append("deepPathTree.dot");
+    std::cout << path << "\n";
+
+    std::vector<Utils::WeightedDot> dots;
+    // Vetor dos nós que irão compor um caminho:
+    // Funcionamento: Se um vértice for visitado ele irá,
+    // em um primeiro momento, entrar no vetor nodesInThePath,
+    // que guarda todos os vértices que compõem o caminho entre
+    // a raiz e o vértice que foi visitado.
+    // Quando o laço de repetição da função assistente 
+    // deepPathAssistent() se encerra, o id do último vetor
+    // visitado é retirado do final do vetor.
+    // O vetor é usado para descobrir todas as arestas de retorno:
+    // se a aresta do último vértice visitado se conecta com algum
+    // vértice do vetor, então esssa é uma aresta de retorno.
+    std::vector<int> nodesInThePath;
+
+    this->setAllNodesVisitedFalse();
+    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges);
+
+    dt->writeOnFile(path, dots, true);
+
+    return returnEdges;
+  }
+
+  void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, 
+  std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges) {
+    // O vértice passado como parâmetro é visitado
+    vertex->visited();
+    // nodesInThePath recebe o id do vértice visitado para
+    // colocar no caminho da árvore
+    nodesInThePath.push_back(vertex->id);
+    // Nó assistente para as operações
+    Node* assistant = nullptr;
+    // Aresta do vértice passado como parâmetro
+    Edge* edge = vertex->getEdge();
+
+    while(edge!=nullptr) {
+      // o nó assistente irá receber o vértice apontado pela aresta
+      assistant = searchById(edge->getTo());
+
+      // Se o vértice foi visitado, será feita uma verificação
+      // no vetor nodesInThePath para saber se algum vértice
+      // no caminho da raíz até o último nó visitado corresponde
+      // ao vértice assistente.
+      // Caso o vértice não tenha sido visitado, será feita uma
+      // chamada recursiva passando o vértice assistente como parâmetro
+      if(assistant->beenVisited()) {
+        for(auto i : nodesInThePath) {
+          if(assistant->id == i) {
+            // Impressão das arestas de retorno ( Usada em testes)
+            //std::cout << vertex->id << " -> " << i << ", ";
+            returnEdges.push_back(edge);
+          }
+        }
+      }
+      else {
+        Utils::WeightedDot dot;
+        dot.origin = vertex->id;
+        dot.destination = assistant->id;
+        dot.weight = edge->getWeight();
+        dots.push_back(dot);
+
+        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges);
+      }
+
+      edge = edge->getNext();
+    }
+    // o id do nó assistente é retirado do vetor nodesInThePath
+    nodesInThePath.pop_back();
+  }
+
+  void Graph::algorithmPrim(Graph* subgraph) {
+    
+    int order = subgraph->getCount();
+
+    std::vector<int> distance;
+    distance.clear();
+
+    //Vector que verifica se o nó já foi visitado;
+    std::vector<bool> visited(order, false);
+
+    //O primeiro inicializado com 0 e os demais com INF;
+    distance.push_back(0);
+    for(int i = 1;i < order;i++) distance.push_back(INF);
+
+    //Vector com os pais de cada nó, -1 caso não tenha pai;
+    std::vector<int> parent(order, -1);
+
+    subgraph->setAllNodesVisitedFalse();
+
+    Node* node = subgraph->getNode();
+    for(int i = 0;i < order;i++) 
+    {
+
+      //Só marcar visitado caso tenha aresta, pq tava dando bug
+      if(!node->getEdgeCount()){
+        node->visited();
+      } else {
+        parent[node->getPosition()] = node->id;
+      }
+      
+      //Percorrer cada aresta do nó
+      Edge* edge = node->getEdge();
+      int j = 0;
+      while(j < node->getEdgeCount()) 
+      {
+        Node* v = subgraph->searchById(edge->getTo());
+        int weigth = edge->getWeight();
+
+        if(!(v->beenVisited()) && distance[v->getPosition()] > weigth) {
+          distance[v->getPosition()] = weigth;
+          //atualizando o pai de cada nó dada a posicao;
+          parent[v->getPosition()] = node->id;
+        }
+        edge = edge->getNext();
+        j++;
+      }
+      node = node->getNext();
+    }
+    //Usado para testar o pai de cada nó;
+    for(int i = 1;i < order;i++) {
+      std::cout << parent[i] << std::endl;
+    }
+    //printPrim(subgraph, parent);
+  }
+
+  void Graph::printPrim(Graph* subgraph, std::vector<int>& mgt) {
+    int peso = 0;
+    std::cout << "\nÁRVORE GERADORA MÍNIMA via Prim\n"
+        << std::endl;
+    std::cout << "graph {" << std::endl;
+    for (int i = 0; i < subgraph->getCount(); i++)
+    {
+        if (mgt[i] != -1)
+        {
+            int destination = subgraph->getNodeByPosition(i)->id;
+            if (mgt[i] == destination)
+                std::cout << "  " << mgt[i] << std::endl;
+            else
+            {
+                std::cout << "  " << mgt[i] << " -- " << destination;
+                /*std::cout << " [label = " << subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight() << "]" << std::endl;
+                peso += subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight();*/
+            }
+        }
+    }
+    std::cout << "}" << std::endl;
+  }
+  
 }

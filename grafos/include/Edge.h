@@ -57,12 +57,21 @@ namespace Graph {
         }
         return edge;
       }
+
+      void setVisited(bool visi) {
+        visited = visi;
+      }
+      
+      bool getVisited() {
+        return visited;
+      }
     private:
       Edge* next;
       int weight;
       int from;
       int to;
       int count = 0;
+      bool visited = false;
   };
   #endif
 }

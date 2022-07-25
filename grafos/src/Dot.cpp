@@ -1,6 +1,11 @@
 #include "../include/Dot.h"
 #include "iostream"
 
+
+/**
+ * @brief Classe para gerar o dot
+ * 
+ */
 namespace Utils {
   Dot::Dot() {
     
@@ -43,7 +48,12 @@ namespace Utils {
       n2 = std::to_string(dot.destination);
       weight = std::to_string(dot.weight);
       outData.append(n1);
-      outData.append(" -> ");
+      if(digraph) {
+        outData.append(" -> ");
+      }
+      else {
+        outData.append(" -- ");
+      }
       outData.append(n2);
       outData.append("[weight=");
       outData.append(weight);

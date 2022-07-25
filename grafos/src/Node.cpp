@@ -34,6 +34,12 @@ namespace Graph {
     return this->next;
   }
 
+
+  /**
+   * @brief Retorna a ultima aresta do nó antes da aresta nula
+   * 
+   * @return Edge* 
+   */
   Edge* Node::getLastEdgeBeforeNull() {
     Edge* t = edge;
     for(int i = 0; i < edgeCount - 1; i++) {
@@ -42,6 +48,12 @@ namespace Graph {
     return t;
   }
 
+  /**
+   * @brief Metodo que gera o relacionamento entre dois nodes (equivalente a inserir uma aresta)
+   * 
+   * @param to 
+   * @param weight 
+   */
   void Node::makeRelationship(int to, int weight = 0) {
     if(edgeCount == 0) {
 //      std::cout << "ID: " << this->id << " TO: " << to << " Weight: " << weight << std::endl;

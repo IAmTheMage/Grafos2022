@@ -9,6 +9,7 @@
 #include "queue"
 #include <climits>
 #include "list"
+#define INF INT_MAX
 
 namespace Graph {
   #ifndef GRAPH
@@ -79,6 +80,32 @@ namespace Graph {
       void floydOut(std::list<int>& p, int** pred, int origin, int destination);
       int** generateArrayRepresentation();
       int** initPred();
+      std::vector<Edge*> deepPathTree(int id);
+      void deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, 
+      std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges);
+      int witchSubTree(SubTree subTree[], int n);
+      void joinSubTrees(SubTree subTree[], int u, int v);
+      static bool searchDots(std::vector<Utils::WeightedDot>& p,int from, int to);
+      void algorithmPrim(Graph* subgraph);
+      void printPrim(Graph* subgraph, std::vector<int>& mgt);
+
+      static void printList(std::list<int> path) {
+        int index = 0;
+        for(int b : path) {
+          if(index == path.size() - 1) {
+            std::cout << b << std::endl;
+          }
+          else {
+            std::cout << b << "->";
+          }
+          index++;
+        }
+      }
+
+      void printKruskal(
+        std::vector<std::pair<int, 
+        std::pair<int, int>>> &edges, 
+        std::vector<int> &mgt, std::string filePath);
 
       void kruskal(Graph* subGraph);
       void cleanVisited() {
@@ -122,7 +149,7 @@ namespace Graph {
       void setFiles(std::string input, std::string output);
 
       //std::vector<Edge> deepPathTree(Node* vertex);
-
+      char* outFile;
       std::ifstream ip;
       std::vector<int> visited;
       Utils::Dot* dt;
