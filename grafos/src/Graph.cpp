@@ -486,66 +486,46 @@ namespace Graph {
 
     //O primeiro inicializado com 0 e os demais com INF;
     distance.push_back(0);
-    for(int i = 0;i < order;i++) distance.push_back(INF);
+    for(int i = 1;i < order;i++) distance.push_back(INF);
 
     //Vector com os pais de cada nó, -1 caso não tenha pai;
     std::vector<int> parent(order, -1);
 
+    subgraph->setAllNodesVisitedFalse();
+
+    Node* node = subgraph->getNode();
     for(int i = 0;i < order;i++) 
     {
-      int minor_p = auxPrim(distance, visited);
-      Node* node = subgraph->getNodeByPosition(i);
-      
-      visited[minor_p] = true;
 
+      //Só marcar visitado caso tenha aresta, pq tava dando bug
+      if(!node->getEdgeCount()){
+        node->visited();
+      } else {
+        parent[node->getPosition()] = node->id;
+      }
+      
       //Percorrer cada aresta do nó
       Edge* edge = node->getEdge();
       int j = 0;
       while(j < node->getEdgeCount()) 
       {
-        int v = edge->getTo();
-        int pos_v = subgraph->searchById(v)->getPosition();
+        Node* v = subgraph->searchById(edge->getTo());
         int weigth = edge->getWeight();
 
-        if(!visited[pos_v] && distance[pos_v] > weigth) {
-          distance[pos_v] = weigth;
-          parent[pos_v] = edge->getFrom();
+        if(!(v->beenVisited()) && distance[v->getPosition()] > weigth) {
+          distance[v->getPosition()] = weigth;
+          //atualizando o pai de cada nó dada a posicao;
+          parent[v->getPosition()] = node->id;
         }
         edge = edge->getNext();
         j++;
       }
+      node = node->getNext();
     }
-  }
-
-  int Graph::auxPrim(std::vector<int> distance, std::vector<bool> visited) {
-    int min = INF;
-    int pos;
-    bool tem_pos = false;
-    for (int i = 0; i < distance.size(); i++)
-    {
-        if (distance[i] < min && visited[i] == false)
-        {
-            min = distance[i];
-            pos = i;
-            tem_pos = true;
-        }
-    }
-    if (tem_pos)
-        return pos;
-    else
-    {
-        for (int i = 0; i < distance.size(); i++)
-        {
-            if (distance[i] == min && visited[i] == false)
-            {
-                min = distance[i];
-                pos = i;
-                tem_pos = true;
-                return pos;
-            }
-        }
-    }
-    return pos;
+    //Usado para testar o pai de cada nó;
+    // for(int i = 1;i < order;i++) {
+    //   std::cout << parent[i] << std::endl;
+    // }
   }
 
   Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
