@@ -52,6 +52,12 @@ namespace Graph {
     dt = new Utils::Dot();
   }
 
+  /**
+   * @brief Função que lê os dados do arquivo e gera tanto os nós quanto as arestas do grafo
+   * 
+   * @param in 
+   * @param out 
+   */
   void Graph::setFiles(std::string in, std::string out) {
     std::string path(ROOT_DIR);
     path.append(in);
@@ -567,6 +573,7 @@ namespace Graph {
    * @param subN
    */
   Graph* Graph::vertexInducedSubgraph(std::vector<int> subN) {
+    std::sort(subN.begin(), subN.end());
     std::vector<Relation> relations;
     Graph* graph = new Graph(this->edgeType, this->graphType);
     for(int b : subN) {
@@ -607,99 +614,63 @@ namespace Graph {
   }
 
   void Graph::kruskal(Graph* subGraph) {
-    std::vector<std::pair<int, std::pair<int, int>>> edges;
-    edges.clear();
-    subGraph->cleanVisited();
-    Node *tempNode = subGraph->getNode();
-    Edge *edge = tempNode->getEdge();
-    int u = tempNode->id;
-    int v;
-
-    if(edge != nullptr) {
-      v = edge->getTo();
-    }
-    for(int i = 1; i < subGraph->getCount(); i++) {
-      if(edge == nullptr) {
-        edges.push_back({INT_MAX, {u, u}});
-      }
-      for(int index = 0; index < tempNode->getEdgeCount(); index++) {
-        if(!subGraph->searchById(v)->beenVisited()) {
-          edges.push_back({edge->getWeight(), {u, v}});
-        }
-        edge = edge->getNext();
-        if(edge != nullptr) {
-          v = edge->getTo();
-        }
-      }
-      tempNode->visited();
-      tempNode = tempNode->getNext();
-      edge = tempNode->getEdge();
-      u = tempNode->id;
-      if(edge != nullptr) {
-        v = edge->getTo();
-      }
-    }
-    std::cout << "Finish 1 part" << std::endl;
-    std::sort(edges.begin(), edges.end());
-    std::cout << "Finish 2 part" << std::endl;
-    SubTree* subTrees = new SubTree[(sizeof(SubTree) * subGraph->getCount())];
+    int* parent = new int[subGraph->getCount()];
     for(int i = 0; i < subGraph->getCount(); i++) {
-      subTrees[i].father = i;
-      subTrees[i].order = 1;
+      parent[i] = i;
     }
-    std::cout << "Finish 3 part" << std::endl;
-    std::vector<int> minTree;
-    int cont = 0;
-    while(minTree.size() < subGraph->getCount() - 1 && cont < edges.size()) {
-      std::pair<int, int> nextEdge = edges[cont].second;
-      
-      int u = nextEdge.first;
-      int v = nextEdge.second;
-      if(u == v) minTree.push_back(cont);
-      if (witchSubTree(subTrees, subGraph->searchById(u)->getPosition()) != witchSubTree(subTrees, subGraph->searchById(v)->getPosition()))
-      {
-          minTree.push_back(cont);
-          joinSubTrees(subTrees, subGraph->searchById(u)->getPosition(), subGraph->searchById(v)->getPosition());
+    std::vector<std::pair<int, std::pair<int, int>>> pairs = subGraph->getGraphInPairFormat();
+    std::vector<std::pair<int, std::pair<int, int>>> pairsMst;
+    for(auto pair : pairs) {
+      std::cout << pair.second.first << ":" << pair.second.second << std::endl;
+    }
+    std::sort(pairs.begin(), pairs.end());
+    int i, uRep, vRep;
+    for(int i = 0; i < pairs.size(); i++) {
+      uRep = findSet(parent, pairs[i].second.first);
+      vRep = findSet(parent, pairs[i].second.second);
+      if(uRep != vRep) {
+        pairsMst.push_back(pairs[i]);
+        unionSet(parent, uRep, vRep);
       }
-      cont++;
     }
-    std::cout << "Finish 4 part" << std::endl;
-    subGraph->cleanVisited();
-    //printKruskal(edges, minTree, "kruskal.dot");
+    std::cout << "EDGES: " << pairsMst.size() << std::endl;
+    for(auto kp : pairsMst) {
+      std::cout << kp.second.first << "->" << kp.second.second << std::endl;
+    }
+    printKruskal(pairsMst);
   }
 
-  void Graph::printKruskal(std::vector<std::pair<int,
-   std::pair<int, int>>> &edges, 
-   std::vector<int> &mgt, std::string filePath) {
+  void Graph::printKruskal(std::vector<std::pair<int, std::pair<int, int>>> &edges) {
     std::cout << "ARVORE GERADORA MINIMA VIA KRUSKAL\n";
     std::string data;
     int weight = 0;
     std::string realFilePath(ROOT_DIR);
-    realFilePath.append(filePath.c_str());
+    realFilePath.append("kruskal.dot");
     std::ofstream oof(realFilePath, std::ios::out | std::ios::trunc);
+    std::string connector;
     if(graphType == DIRECTED) {
       oof << "digraph {\n";
+      connector.append("->");
     }
     else {
       oof << "graph {\n";
+      connector.append("--");
     }
-    for(int i = 0; i < mgt.size(); i++) {
-      if(edges[mgt[i]].second.first == edges[mgt[i]].second.second) {
-        oof << " " << edges[mgt[i]].second.first << std::endl;
+    for(int i = 0; i < edges.size(); i++) {
+      if(edges[i].second.first == edges[i].second.second) {
+        oof << " " << edges[i].second.first << std::endl;
       }
       else {
-        oof << edges[mgt[i]].second.first << " -> " << edges[mgt[i]].second.second;
-        oof << " [weight = " << edges[mgt[i]].first << "]" << std::endl;
-        weight += edges[mgt[i]].first;
+        oof << edges[i].second.first << connector << edges[i].second.second;
+        oof << " [weight = " << edges[i].first << "]" << std::endl;
+        weight += edges[i].first;
       }
     }
     oof << "}\n";
   }
 
   int Graph::witchSubTree(SubTree subTree[], int n) {
-    if(subTree[n].father != n)
-      subTree[n].father = witchSubTree(subTree, subTree[n].father);
-    return subTree[n].father;
+  
   }
 
   void Graph::joinSubTrees(SubTree subTree[], int u, int v) {

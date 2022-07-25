@@ -102,10 +102,45 @@ namespace Graph {
         }
       }
 
+      int findSet(int* parent, int a) {
+        while(parent[a] != a)
+        {
+            parent[a] = parent[parent[a]];
+            a = parent[a];
+        }
+        return a;
+      }
+
+      void unionSet(int*parent, int u, int v) {
+        parent[u] = parent[v];
+      }
+
+      std::vector<std::pair<int, std::pair<int, int>>> getGraphInPairFormat() {
+        std::vector<std::pair<int, std::pair<int, int>>> pairs;
+        for(int i = 0; i < count; i++) {
+          Node* p = getNodeByPosition(i);
+          Edge* edge = p->getEdge();
+          /*if(p->getEdgeCount() == 0) {
+            pairs.push_back({0, {p->id, p->id}});
+          }*/
+          for(int b = 0; b < p->getEdgeCount(); b++) {
+            bool cond = true;
+            for(auto l : pairs) {
+              if((l.second.first == p->id && l.second.second == edge->getTo()) || (l.second.first == edge->getTo() && l.second.second == p->id)) {
+                cond = false;
+              }
+            }
+            if(cond) {
+              pairs.push_back({edge->getWeight(), {p->id, edge->getTo()}});
+            }
+            edge = edge->getNext();
+          }
+        }
+        return pairs;
+      }
+
       void printKruskal(
-        std::vector<std::pair<int, 
-        std::pair<int, int>>> &edges, 
-        std::vector<int> &mgt, std::string filePath);
+        std::vector<std::pair<int, std::pair<int, int>>>& edges );
 
       void kruskal(Graph* subGraph);
       void cleanVisited() {
