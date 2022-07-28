@@ -48,6 +48,8 @@ namespace Graph {
     return t;
   }
 
+
+
   /**
    * @brief Metodo que gera o relacionamento entre dois nodes (equivalente a inserir uma aresta)
    * 

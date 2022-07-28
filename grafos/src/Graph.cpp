@@ -2,17 +2,24 @@
 #include "string.h"
 #include "vector"
 #include "algorithm"
+#ifdef IS_CMAKE
 #include "config.h"
+#endif
 
 #ifdef LINUX
 #include "sys/types.h"
 #include "sys/sysinfo.h"
 #endif
 
+#ifndef ROOT_DIR
+#define ROOT_DIR "./grafos/src"
+#endif
+
 
 
 namespace Graph {
   Graph::Graph(char** args) {
+    std::cout << "Gerando Grafo" << std::endl;
     dt = new Utils::Dot();
     if(strcmp(args[4], "1") == 0) {
       edgeType = EdgeType::PONDERED;
@@ -27,8 +34,9 @@ namespace Graph {
       graphType = GraphType::NONDIRECTED;
     }
     std::string in(args[1]);
-    std::string out(args[2]);
-    setFiles(in, out);
+    std::string temp(args[2]);
+    outputFilePath = temp;
+    setFiles(in);
   }
 
   Node* Graph::searchById(int id) {
@@ -58,8 +66,8 @@ namespace Graph {
    * @param in 
    * @param out 
    */
-  void Graph::setFiles(std::string in, std::string out) {
-    std::string path(ROOT_DIR);
+  void Graph::setFiles(std::string in) {
+    std::string path("");
     path.append(in);
     std::fstream ip(path, std::ios::in);
     if(ip.is_open()) {
@@ -118,6 +126,7 @@ namespace Graph {
     else {
       std::cout << "Is close" << "\n";
     }
+    std::cout << "Grafo gerado" << std::endl;
   }
 
   /**
@@ -125,8 +134,7 @@ namespace Graph {
    * 
    */
   void Graph::generateGraphVizRepresentation() {
-    std::string filePath(ROOT_DIR);
-    filePath.append("graph.dot");
+    std::string filePath(outputFilePath.c_str());
     //Vetor de refêrencia para gerar o dot
     std::vector<Utils::WeightedDot> dots;
     Node* p = node;
@@ -161,7 +169,6 @@ namespace Graph {
   bool Graph::searchDots(std::vector<Utils::WeightedDot>& p, int from, int to) {
     for(auto b : p) {
       if((b.origin == from && b.destination == to) || (b.origin == to && b.destination == from )) {
-        std::cout << "Ja processado: " << from << ":" << to << std::endl;
         return true;
       }
     }
@@ -172,7 +179,7 @@ namespace Graph {
     Utils::PerformanceMetrics* metrics = new Utils::PerformanceMetrics();
     metrics->setupOutputFile("metrics.txt");
     Node* n = searchById(id);
-    std::string path(ROOT_DIR);
+    std::string path(outputFilePath.c_str());
     #ifdef LINUX
     struct sysinfo memInfo;
     long long physMemUsed = memInfo.totalram - memInfo.freeram;
@@ -180,8 +187,6 @@ namespace Graph {
     physMemUsed *= memInfo.mem_unit;
     metrics->setMemoryUsed(physMemUsed);
     #endif
-    path.append("out.dot");
-    std::cout << path << "\n";
     #ifdef TEST_CASE
     metrics->setupTestSuit("FileSystem");
     metrics->startClock();
@@ -238,9 +243,9 @@ namespace Graph {
 
     // Ideia similar ao fecho transitivo direto:
     Utils::Dot* dot = new Utils::Dot();
-    std::string path(ROOT_DIR);
+    std::string path(outputFilePath.c_str());
     std::cout << path << "\n";
-    path.append("indirectTransitiveClosure.dot");
+    path.append("_indirect_transitive_closure.txt");
     std::cout << path << "\n";
     std::fstream file;
     file.open(path, std::ios::trunc | std::ios::out);
@@ -334,7 +339,7 @@ namespace Graph {
     for(int i = 0; i < index; i++) {
       clustering += neighborsConnected(connected[i], connected, index);
     }
-    if(s->getEdgeCount() == 0 || clustering == 0) return 0;
+    if(s->getEdgeCount() == 0) return 0;
     float clusteringRealValue = (float)((float)clustering / (s->getEdgeCount() * (s->getEdgeCount() - 1) / 2));
     if(graphType == DIRECTED) {
       clusteringRealValue *= 0.5;
@@ -433,6 +438,8 @@ namespace Graph {
       }
     }
     std::cout << "dijkstra finished" << std::endl;
+    delete [] dist;
+    delete [] visited;
     return shortestPath(origin, destination, predecessor);
   }
 
@@ -563,6 +570,7 @@ namespace Graph {
     }
     //Adiciona a origem na lista
     path.push_front(origin);
+    delete [] predecessors;
     return path;
   }
 
@@ -620,32 +628,29 @@ namespace Graph {
     }
     std::vector<std::pair<int, std::pair<int, int>>> pairs = subGraph->getGraphInPairFormat();
     std::vector<std::pair<int, std::pair<int, int>>> pairsMst;
-    for(auto pair : pairs) {
-      std::cout << pair.second.first << ":" << pair.second.second << std::endl;
-    }
+    std::cout << "Finish 2 part" << "\n";
     std::sort(pairs.begin(), pairs.end());
+    for(auto b : pairs) {
+      std::cout << "Weight: " << b.first << std::endl;
+    }
     int i, uRep, vRep;
     for(int i = 0; i < pairs.size(); i++) {
-      uRep = findSet(parent, pairs[i].second.first);
-      vRep = findSet(parent, pairs[i].second.second);
+      uRep = findSet(parent, subGraph->getNodeReferenceIndex(pairs[i].second.first));
+      vRep = findSet(parent, subGraph->getNodeReferenceIndex(pairs[i].second.second));
       if(uRep != vRep) {
         pairsMst.push_back(pairs[i]);
         unionSet(parent, uRep, vRep);
       }
     }
-    std::cout << "EDGES: " << pairsMst.size() << std::endl;
-    for(auto kp : pairsMst) {
-      std::cout << kp.second.first << "->" << kp.second.second << std::endl;
-    }
-    printKruskal(pairsMst);
+    printKruskal(pairsMst, subGraph);
   }
 
-  void Graph::printKruskal(std::vector<std::pair<int, std::pair<int, int>>> &edges) {
+  void Graph::printKruskal(std::vector<std::pair<int, std::pair<int, int>>> &edges, Graph* subGraph) {
     std::cout << "ARVORE GERADORA MINIMA VIA KRUSKAL\n";
     std::string data;
     int weight = 0;
-    std::string realFilePath(ROOT_DIR);
-    realFilePath.append("kruskal.dot");
+    std::string realFilePath(outputFilePath.c_str());
+    realFilePath.append("_kruskal.dot");
     std::ofstream oof(realFilePath, std::ios::out | std::ios::trunc);
     std::string connector;
     if(graphType == DIRECTED) {
@@ -666,7 +671,13 @@ namespace Graph {
         weight += edges[i].first;
       }
     }
+    Node* p = subGraph->getNode();
+    while(p != nullptr) {
+      oof << p->id << std::endl;
+      p = p->getNext();
+    }
     oof << "}\n";
+    oof.close();
   }
 
   int Graph::witchSubTree(SubTree subTree[], int n) {
@@ -699,7 +710,7 @@ namespace Graph {
       return returnEdges;
     }
 
-    std::string path(ROOT_DIR);
+    std::string path(outputFilePath.c_str());
     path.append("deepPathTree.dot");
     std::cout << path << "\n";
 
@@ -826,6 +837,7 @@ namespace Graph {
     }
     //printPrim(subgraph, parent);
   }
+
 
   void Graph::printPrim(Graph* subgraph, std::vector<int>& mgt) {
     int peso = 0;

@@ -3,6 +3,7 @@
 #include "vector"
 
 int main(int argc, char** argv) {
+  std::cout << "Gerando grafo" << std::endl;
   Graph::Graph* graph = new Graph::Graph(argv);
   std::cout << "Selecione o algoritmo a ser executado: " << std::endl;
   std::cout << "0: Fecho transitivo direto" << std::endl;

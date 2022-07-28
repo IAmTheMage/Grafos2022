@@ -1,4 +1,3 @@
-
 add_definitions(-DTEST_CASE=1)
 
 add_executable(test1 test1.cc)

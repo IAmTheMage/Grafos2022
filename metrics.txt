@@ -1,6 +1,2 @@
 Suit; Metric; Memory Usage
-FileSystem;0.0001371;0KB
-FileSystem;0.0001907;0KB
-FileSystem;0.0001418;0KB
-FileSystem;0.0001698;0KB
-FileSystem;0.0002072;0KB
+FileSystem;0.0297149;950317933856825398KB

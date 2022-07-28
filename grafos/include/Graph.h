@@ -88,6 +88,19 @@ namespace Graph {
       static bool searchDots(std::vector<Utils::WeightedDot>& p,int from, int to);
       void algorithmPrim(Graph* subgraph);
       void printPrim(Graph* subgraph, std::vector<int>& mgt);
+      void readClusteringFile(std::ifstream& stream) {
+
+      };
+
+      std::vector<int> getGraphIds() {
+        Node* p = node;
+        std::vector<int> s;
+        while(p != nullptr) {
+          s.push_back(p->id);
+          p = p->getNext();
+        }
+        return s;
+      }
 
       static void printList(std::list<int> path) {
         int index = 0;
@@ -102,13 +115,14 @@ namespace Graph {
         }
       }
 
-      int findSet(int* parent, int a) {
-        while(parent[a] != a)
-        {
-            parent[a] = parent[parent[a]];
-            a = parent[a];
-        }
-        return a;
+      int findSet(int* parent, int i) {
+        if (i == parent[i])
+          return i;
+        else
+          // Else if i is not the parent of itself
+          // Then i is not the representative of his set,
+          // so we recursively call Find on its parent
+          return findSet(parent ,parent[i]);
       }
 
       void unionSet(int*parent, int u, int v) {
@@ -140,7 +154,7 @@ namespace Graph {
       }
 
       void printKruskal(
-        std::vector<std::pair<int, std::pair<int, int>>>& edges );
+        std::vector<std::pair<int, std::pair<int, int>>>& edges, Graph* subGraph );
 
       void kruskal(Graph* subGraph);
       void cleanVisited() {
@@ -181,8 +195,8 @@ namespace Graph {
       GraphType graphType;
       EdgeType edgeType;
       int count = 0;
-      void setFiles(std::string input, std::string output);
-
+      void setFiles(std::string input);
+      std::string outputFilePath;
       //std::vector<Edge> deepPathTree(Node* vertex);
       char* outFile;
       std::ifstream ip;
