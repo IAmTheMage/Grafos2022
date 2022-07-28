@@ -1,4 +1,3 @@
-
 add_definitions(-DTEST_CASE=1)
 
 add_executable(test1 test1.cc)
@@ -30,3 +29,9 @@ target_link_libraries(test7 PUBLIC grafo)
 
 add_executable(test8 test8.cc)
 target_link_libraries(test8 PUBLIC grafo)
+
+add_executable(test9 test9.cc)
+target_link_libraries(test9 PUBLIC grafo)
+
+add_executable(main main.cc)
+target_link_libraries(main PUBLIC grafo)

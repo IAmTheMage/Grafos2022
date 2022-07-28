@@ -1,6 +1,11 @@
 #include "../include/Dot.h"
 #include "iostream"
 
+
+/**
+ * @brief Classe para gerar o dot
+ * 
+ */
 namespace Utils {
   Dot::Dot() {
     
@@ -43,7 +48,12 @@ namespace Utils {
       n2 = std::to_string(dot.destination);
       weight = std::to_string(dot.weight);
       outData.append(n1);
-      outData.append(" -> ");
+      if(digraph) {
+        outData.append(" -> ");
+      }
+      else {
+        outData.append(" -- ");
+      }
       outData.append(n2);
       outData.append("[weight=");
       outData.append(weight);
@@ -51,6 +61,11 @@ namespace Utils {
     }
     oof << outData;
     oof << "}\n";
+  }
+
+  void Dot::writeOnFile(Edge* edge) {
+    std::cout << "Write edge: " << edge->getTo() << "\n";
+    of << edge->getFrom() << " -> " << edge->getTo() << " [weight=" << edge->getWeight() << "]\n";
   }
 
   void Dot::startGraph(std::string path) {
@@ -61,6 +76,16 @@ namespace Utils {
     }
     data.append("digraph D {\n");
     of << data;
+  }
+
+  void Dot::startGraph(std::string path, bool digraph) {
+    of.open(path, std::ios::trunc | std::ios::out);
+    if(digraph) {
+      data.append("digraph {\n");
+    }
+    else {
+      data.append("graph {\n");
+    }
   }
 
   void Dot::generateDotRepresentation(DotType p) {

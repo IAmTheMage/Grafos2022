@@ -19,11 +19,30 @@ namespace Graph {
       Node* getLastBeforeNull();
       Node* getNext();
       void instanceNew(int id) {
-        this->next = make(id);
+        this->next = new Node();
+        this->next->id = id;
       }
       Edge* getEdge() {
         return this->edge;
       }
+
+      void setEdge(Edge* p) {
+        this->edge = p;
+      }
+
+      Edge* searchEdge(int to) {
+        Edge* ed = edge;
+        while(ed != nullptr) {
+          if(ed->getTo() == to) return ed;
+          ed = ed->getNext();
+        }
+        return nullptr;
+      }
+ 
+      void setNext(Node* s) {
+        this->next = s;
+      }
+
       void makeRelationship(int id, int weight);
       int getEdgeCount() {
         return this->edgeCount;
