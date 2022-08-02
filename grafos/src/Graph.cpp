@@ -19,7 +19,6 @@
 
 namespace Graph {
   Graph::Graph(char** args) {
-    std::cout << "Gerando Grafo" << std::endl;
     dt = new Utils::Dot();
     if(strcmp(args[4], "1") == 0) {
       edgeType = EdgeType::PONDERED;
@@ -75,58 +74,156 @@ namespace Graph {
       std::getline(ip, b);
       int numberOfNodes = std::atoi(b.c_str());
       std::vector<int> values;
-      while(getline(ip, b)) {
-        std::string s;
-        std::stringstream temp(b);
-        if(edgeType == PONDERED) {
-          while(getline(temp, s, ' ')) {
-            values.push_back(std::atoi(s.c_str()));
-          }
-          Node* p = this->searchById(values[0]);
-          if(p == nullptr) {
-            p = instanceNewNode(values[0]);
-            p->setPosition(this->count - 1);
-          }
-          Node* s = this->searchById(values[1]);
-          if(s == nullptr) {
-            s = instanceNewNode(values[1]);
-            s->setPosition(this->count - 1);
-          }
-          p->makeRelationship(values[1], values[2]);
-          
-          if(graphType == GraphType::NONDIRECTED) {
-            s->makeRelationship(values[0], values[2]);
+      if(b.size() == 1) {
+        while(getline(ip, b)) {
+          std::string s;
+          std::stringstream temp(b);
+          if(edgeType == PONDERED) {
+            while(getline(temp, s, ' ')) {
+              values.push_back(std::atoi(s.c_str()));
+            }
+            Node* p = this->searchById(values[0]);
+            if(p == nullptr) {
+              p = instanceNewNode(values[0]);
+              p->setPosition(this->count - 1);
+            }
+            Node* s = this->searchById(values[1]);
+            if(s == nullptr) {
+              s = instanceNewNode(values[1]);
+              s->setPosition(this->count - 1);
+            }
+            p->makeRelationship(values[1], values[2]);
             
+            if(graphType == GraphType::NONDIRECTED) {
+              s->makeRelationship(values[0], values[2]);
+              
+            }
+            values.clear();
           }
-          values.clear();
+          else {
+            while(getline(temp, s, ' ')) {
+              values.push_back(std::atoi(s.c_str()));
+            }
+            Node* p = this->searchById(values[0]);
+            if(p == nullptr) {
+              p = instanceNewNode(values[0]);
+              p->setPosition(this->count - 1);
+            }
+            p->makeRelationship(values[1], 1);
+            Node* s = this->searchById(values[1]);
+            if(s == nullptr) {
+              s = instanceNewNode(values[1]);
+              s->setPosition(this->count - 1);
+            }
+            if(graphType == GraphType::NONDIRECTED) {
+              s->makeRelationship(values[0], 1);
+            }
+            values.clear();
+          }
         }
-        else {
-          while(getline(temp, s, ' ')) {
-            values.push_back(std::atoi(s.c_str()));
-          }
-          Node* p = this->searchById(values[0]);
-          if(p == nullptr) {
-            p = instanceNewNode(values[0]);
-            p->setPosition(this->count - 1);
-          }
-          p->makeRelationship(values[1], 1);
-          Node* s = this->searchById(values[1]);
-          if(s == nullptr) {
-            s = instanceNewNode(values[1]);
-            s->setPosition(this->count - 1);
-          }
-          if(graphType == GraphType::NONDIRECTED) {
-            s->makeRelationship(values[0], 1);
-          }
-          values.clear();
-        }
+        ip.close();
       }
-      ip.close();
+      else {
+        std::cout << "Clustering file" << std::endl;
+        readClusteringFile(in);
+      }
     }
     else {
       std::cout << "Is close" << "\n";
     }
     std::cout << "Grafo gerado" << std::endl;
+  }
+
+  void Graph::readClusteringFile(std::string path) {
+    std::ifstream ip(path, std::ios::in);
+    std::string b;
+    ClusterInfo clusterInfo;
+    int index = 0;
+    while(getline(ip, b)) {
+      if(index == 0) {
+        clusterInfo = readClusteringFirstPart(b);
+        index++;
+      }
+      else if(index >= 1) {
+        addClusteringEdge(b);
+      }
+    }
+    clusters = clusterInfo.clusters;
+  }
+
+  void Graph::addClusteringEdge(std::string data) {
+    std::stringstream stream(data);
+    int index = 0;
+    std::string temp;
+    Node *from, *to;
+    float weight = 0.0f;
+    while(getline(stream, temp, ' ')) {
+      if(index == 0) {
+        from = searchById(std::atoi(temp.c_str()));
+      }
+      else if(index == 1) {
+        to = searchById(std::atoi(temp.c_str()));
+      }
+      else if(index == 2) {
+        weight = std::atof(temp.c_str());
+      }
+      index++;
+    }
+    from->makeRelationship(to->id, weight);
+    to->makeRelationship(from->id, weight);
+  }
+
+  ClusterInfo Graph::readClusteringFirstPart(std::string data) {
+    std::stringstream strstream(data);
+    int index = 0;
+    ClusterInfo clusterInfo;
+    int nodeAmount = 0;
+    int nodeRealAmount = 0;
+    int nodeIndex = 0;
+    std::vector<Cluster> clusters;
+    std::vector<int> weights;
+    int ind = 0;
+    while(getline(strstream, data, ' ')) {
+      if(index == 0) {
+        nodeAmount = std::atoi(data.c_str());
+        nodeRealAmount = nodeAmount;
+      }
+      else if(index == 1) {
+        clusterInfo.numberOfClusters = std::atoi(data.c_str());
+      }
+      else if(index == 2) {
+        if(data == "ds") {
+          clusterInfo.type = 'd';
+        }
+        else {
+          clusterInfo.type = 's';
+        }
+        std::string pt;
+        getline(strstream, pt, 'W');
+        std::stringstream strstreamtemp(pt);
+        std::string temp;
+        bool cond = false;
+        while(getline(strstreamtemp, temp, ' ')) {
+          Cluster cluster;
+          cluster.totalWeight = 0.0f;
+          cluster.lowerLimit = std::atoi(temp.c_str());
+          getline(strstreamtemp, temp, ' ');
+          cluster.upperLimit = std::atoi(temp.c_str());
+          clusters.push_back(cluster);
+        }
+      }
+      else if(index >= 3) {
+        weights.push_back(std::atoi(data.c_str()));
+        ind++;
+      }
+      index++;
+    }
+    int nodeId = 0;
+    weights.erase(weights.begin());
+    this->instanceNewNode(nodeId, weights[0]);  
+    this->node->instanceMultiplesNodes(nodeAmount, weights);  
+    clusterInfo.clusters = clusters;
+    return clusterInfo;
   }
 
   /**
@@ -270,7 +367,63 @@ namespace Graph {
     file.close();
   }
 
-  void Graph::setAllNodesVisitedFalse() {
+  std::vector<Node*> Graph::getGraphInVectorFormat() {
+    std::vector<Node*> v;
+    Node* p = node;
+    while(p != nullptr) {
+      v.push_back(p);
+      p = p->getNext();
+    }
+    std::sort(v.begin(), v.end(), [](Node* n, Node* b) {
+      return n->getClusteringRelativeValue() < b->getClusteringRelativeValue();
+    });
+    return v;
+  }
+
+  void Graph::greedy() {
+    std::cout << "Count is: " << count << std::endl;
+    std::vector<Node*> viz = getGraphInVectorFormat();
+    int index = viz.size();
+    int nInterations = 0;
+    while(!viz.empty()) {
+      for(int i = 0; i < clusters.size(); i++) {
+        if(viz.empty()) break;
+        clusters[i].ids.push_back(viz.back()->id);
+        clusters[i].currentWeight += viz.back()->getWeight();
+        viz.pop_back();
+      }
+    }
+    int ind = 1;
+    constructClusterSet();
+    for(Cluster cluster: clusters) {
+      std::cout << "Cluster: " << ind << " has weight: " << cluster.currentWeight << " and has degree: " << cluster.totalWeight << std::endl;
+    }
+  }
+
+
+  void Graph::constructClusterSet() {
+    std::vector<int> reference;
+    int index = 0;
+    for(Cluster cluster : clusters) {
+      cluster.totalWeight = 0;
+      reference = cluster.ids;
+      for(int id : cluster.ids) {
+        Node* p = searchById(id);
+        reference.erase(std::remove(reference.begin(), reference.end(), id), reference.end());
+        for(int toId : reference) {
+          Edge* temp = p->searchEdge(toId);
+          if(temp != nullptr) {
+            std::cout << "nao e nulo" << std::endl;
+            clusters[index].totalWeight += temp->getWeight();
+          }
+        }
+      }
+      index++;
+    }
+  }
+
+
+  void Graph::setAllNodesVisitedFalse() { 
     Node* node = this->node;
     while(node!=nullptr) {
       node->setVisitFalse();
@@ -425,7 +578,7 @@ namespace Graph {
         Node* selectedNode = searchById(selected);
         if(selectedNode != nullptr) edge = selectedNode->getEdge();
         while(edge != nullptr) {
-          int weight = 1;
+          float weight = 1;
           if(edgeType == EdgeType::PONDERED) weight = edge->getWeight();
           int ver = getNodeReferenceIndex(edge->getTo());
           if(dist[ver] > (dist[nodeReferenceIndex] + weight)) {

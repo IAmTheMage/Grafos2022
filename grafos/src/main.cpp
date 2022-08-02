@@ -16,6 +16,7 @@ int main(int argc, char** argv) {
   std::cout << "7: Kruskal" << std::endl;
   std::cout << "8: Caminhamento em profundidade" << std::endl;
   std::cout << "9: Gerar representacao em dot do grafo" << std::endl;
+  std::cout << "10: Greedy algoritm" << std::endl;
   int selected;
   std::cin >> selected;
   switch(selected) {
@@ -97,6 +98,8 @@ int main(int argc, char** argv) {
       break;
     case 9:
       graph->generateGraphVizRepresentation();
+    case 10:
+      graph->greedy();
     default:
       break;
   }

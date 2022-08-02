@@ -23,7 +23,7 @@ namespace Utils {
   struct WeightedDot {
     int destination;
     int origin;
-    int weight;
+    float weight;
   };
 
   class Dot {

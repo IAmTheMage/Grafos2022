@@ -33,5 +33,8 @@ target_link_libraries(test8 PUBLIC grafo)
 add_executable(test9 test9.cc)
 target_link_libraries(test9 PUBLIC grafo)
 
+add_executable(greedyAlgoritmTest greedyAlgoritmTest.cc)
+target_link_libraries(greedyAlgoritmTest PUBLIC grafo)
+
 add_executable(main main.cc)
 target_link_libraries(main PUBLIC grafo)

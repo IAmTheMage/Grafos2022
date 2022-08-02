@@ -33,6 +33,21 @@ namespace Graph {
     int order;
   };
 
+  struct Cluster {
+    int lowerLimit;
+    int upperLimit;
+    float totalWeight = 0;
+    std::vector<int> ids;
+    int currentWeight = 0;
+  };
+
+  struct ClusterInfo {
+    int numberOfNodes;
+    int numberOfClusters;
+    char type;
+    std::vector<Cluster> clusters;
+  };
+
   class Graph {
     public:
       Graph(char** argv);
@@ -64,6 +79,23 @@ namespace Graph {
           return node->getLastBeforeNull();
         }
       }
+
+      Node* instanceNewNode(int id, int weight) {
+        if(count == 0) {
+          node = new Node();
+          node->id = id;
+          node->setWeight(weight);
+          count++;
+          return node;
+        }
+        else {
+          Node* p = node->getLastBeforeNull();
+          p->instanceNew(id);
+          p->setWeight(weight);
+          count++;
+          return p;
+        }
+      }
       Node* searchById(int id);
       std::list<int> dijkstra(int id, int destination);
       std::list<int> shortestPath(int origin ,int destination, int* predecessors);
@@ -72,6 +104,7 @@ namespace Graph {
       void indirectTransitiveClosure(int id);
       Utils::DotType getAllNodesConnected(int id);
       std::vector<Utils::DotType> generateDotTypeVector();
+      void constructClusterSet();
       float clusteringCoeficient(int id);
       float clusteringGlobalCoeficient();
       int neighborsConnected(int id, int* p, int size);
@@ -88,9 +121,19 @@ namespace Graph {
       static bool searchDots(std::vector<Utils::WeightedDot>& p,int from, int to);
       void algorithmPrim(Graph* subgraph);
       void printPrim(Graph* subgraph, std::vector<int>& mgt);
-      void readClusteringFile(std::ifstream& stream) {
-
-      };
+      void readClusteringFile(std::string path);
+      ClusterInfo readClusteringFirstPart(std::string data);
+      std::vector<Node*> getGraphInVectorFormat();
+      void addClusteringEdge(std::string data);
+      void printClusteringEdges(int id) {
+        Node* p = searchById(id);
+        Edge* edge = p->getEdge();
+        while(edge != nullptr) {
+          std::cout << "From: " << edge->getFrom() << " to: " << edge->getTo() << " weight: " << edge->getWeight() << std::endl;
+          edge = edge->getNext();
+        }
+      }
+      void greedy();
 
       std::vector<int> getGraphIds() {
         Node* p = node;
@@ -202,6 +245,7 @@ namespace Graph {
       std::ifstream ip;
       std::vector<int> visited;
       Utils::Dot* dt;
+      std::vector<Cluster> clusters;
   };
 
   #endif 

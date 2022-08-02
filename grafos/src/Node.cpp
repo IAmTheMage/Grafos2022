@@ -56,7 +56,7 @@ namespace Graph {
    * @param to 
    * @param weight 
    */
-  void Node::makeRelationship(int to, int weight = 0) {
+  void Node::makeRelationship(int to, float weight = 0) {
     if(edgeCount == 0) {
 //      std::cout << "ID: " << this->id << " TO: " << to << " Weight: " << weight << std::endl;
       this->edge = new Edge(this->id, to, weight);
@@ -67,6 +67,7 @@ namespace Graph {
       last->setNext(new Edge(this->id, to, weight));
     }
     edgeCount++;
+    totalWeight += weight;
   }
 
 }

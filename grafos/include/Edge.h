@@ -26,7 +26,7 @@ namespace Graph {
       Edge* getNext() {
         return this->next;
       }
-      int getWeight() {
+      float getWeight() {
         return this->weight;
       }
       int getFrom() {
@@ -67,7 +67,7 @@ namespace Graph {
       }
     private:
       Edge* next;
-      int weight;
+      float weight;
       int from;
       int to;
       int count = 0;
