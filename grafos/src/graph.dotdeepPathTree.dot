@@ -1,6 +1,0 @@
-digraph {
-0 -> 2[weight=3]
-2 -> 3[weight=6]
-2 -> 4[weight=3]
-4 -> 5[weight=7]
-}

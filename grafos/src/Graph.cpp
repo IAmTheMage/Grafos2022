@@ -836,7 +836,6 @@ namespace Graph {
         for(int b = 0; b < 1; b++) {
           int v = edge->getTo();
           int pos_v = subgraph->getNodeReferenceIndex(v);
-          std::cout << pos_v << "\n";
           if(!isVisited[pos_v]) {
             if(edge->getWeight() < distance[pos_v]) {
               distance[pos_v] = edge->getWeight();
