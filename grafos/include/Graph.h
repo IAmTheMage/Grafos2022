@@ -82,7 +82,7 @@ namespace Graph {
       int** initPred();
       std::vector<Edge*> deepPathTree(int id);
       void deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, 
-      std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges);
+      std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges, Node* lastNodeVisited);
       int witchSubTree(SubTree subTree[], int n);
       void joinSubTrees(SubTree subTree[], int u, int v);
       static bool searchDots(std::vector<Utils::WeightedDot>& p,int from, int to);

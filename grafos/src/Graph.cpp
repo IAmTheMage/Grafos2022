@@ -729,15 +729,20 @@ namespace Graph {
     std::vector<int> nodesInThePath;
 
     this->setAllNodesVisitedFalse();
-    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges);
+    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges, nullptr);
 
     dt->writeOnFile(path, dots, true);
 
     return returnEdges;
   }
 
+  // Node* vertex: Nó atual
+  // nodesInThePath: nós no caminho atual da árvore
+  // dots: arquivo utilizado para gerar o dot da árvore
+  // returnEdges: arestas de retorno
+  // lastNodeVisited: último nó visitado(caso do grafo não direcionado)
   void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, 
-  std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges) {
+  std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges, Node* lastNodeVisited) {
     // O vértice passado como parâmetro é visitado
     vertex->visited();
     // nodesInThePath recebe o id do vértice visitado para
@@ -761,9 +766,17 @@ namespace Graph {
       if(assistant->beenVisited()) {
         for(auto i : nodesInThePath) {
           if(assistant->id == i) {
-            // Impressão das arestas de retorno ( Usada em testes)
-            //std::cout << vertex->id << " -> " << i << ", ";
-            returnEdges.push_back(edge);
+            // Se o grafo não for orientado:
+            if(graphType == GraphType::NONDIRECTED) {
+              if(assistant!=lastNodeVisited) {
+                std::cout << vertex->id << " -> " << i << ", ";
+                returnEdges.push_back(edge);
+              }
+            }
+            else if(graphType == GraphType::DIRECTED){
+              std::cout << vertex->id << " -> " << i << ", ";
+              returnEdges.push_back(edge);
+            }
           }
         }
       }
@@ -774,7 +787,7 @@ namespace Graph {
         dot.weight = edge->getWeight();
         dots.push_back(dot);
 
-        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges);
+        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges, vertex);
       }
 
       edge = edge->getNext();

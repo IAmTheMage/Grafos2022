@@ -1,0 +1,7 @@
+digraph {
+1 -> 4[weight=2]
+4 -> 0[weight=1]
+0 -> 2[weight=3]
+2 -> 3[weight=6]
+0 -> 5[weight=2]
+}
