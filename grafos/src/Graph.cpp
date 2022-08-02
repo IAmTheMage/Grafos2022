@@ -164,6 +164,7 @@ namespace Graph {
       //Metodo para gerar o dot
       dt->writeOnFile(filePath, dots, false);
     }
+    std::cout << "Arquivo gravado em: " << filePath << std::endl;
   }
 
   bool Graph::searchDots(std::vector<Utils::WeightedDot>& p, int from, int to) {
@@ -340,9 +341,10 @@ namespace Graph {
       clustering += neighborsConnected(connected[i], connected, index);
     }
     if(s->getEdgeCount() == 0) return 0;
-    float clusteringRealValue = (float)((float)clustering / (s->getEdgeCount() * (s->getEdgeCount() - 1) / 2));
-    if(graphType == DIRECTED) {
-      clusteringRealValue *= 0.5;
+    if(s->getEdgeCount() * (s->getEdgeCount() - 1) == 0) return 0;
+    float clusteringRealValue = (float)((float)clustering / (s->getEdgeCount() * (s->getEdgeCount() - 1) * 2));
+    if(graphType == NONDIRECTED) {
+      clusteringRealValue *= 2;
     }
     return clusteringRealValue;
   }
@@ -365,7 +367,7 @@ namespace Graph {
 
   /**
    * @brief Pega a posição de um node baseado no id
-   * @deprecated em favor de searchNodeById(id)->getPosition()
+   *
    * 
    * @param id 
    * @return int 
@@ -379,6 +381,25 @@ namespace Graph {
       p = p->getNext();
     }
     std::cout << "Erro, indice invalido: " << id << std::endl;
+    exit(0);
+  }
+
+  /**
+   * @brief Pega a posição de um node baseado no id (dijkstra)
+   *
+   * 
+   * @param id 
+   * @return int 
+   */
+  int Graph::getNodeReferenceIndex(int id, bool t) {
+    Node* p = node;
+    int index = 0;
+    while(index < count) {
+      if(p->id == id) return index;
+      index++;
+      p = p->getNext();
+    }
+    std::cout << "Erro, caminho infinito para esse conjunto de vertices: " << std::endl;
     exit(0);
   }
 
@@ -440,6 +461,7 @@ namespace Graph {
     std::cout << "dijkstra finished" << std::endl;
     delete [] dist;
     delete [] visited;
+
     return shortestPath(origin, destination, predecessor);
   }
 
@@ -562,11 +584,11 @@ namespace Graph {
     std::list<int> path;
     //Adiciona o destino na frente da lista
     path.push_front(destination);
-    int ver = getNodeReferenceIndex(destination);
+    int ver = getNodeReferenceIndex(destination, true);
     //Adiciona os antecessores de cada vertice na lista até 1 deles ser igual a origem
     while(predecessors[ver] != origin) {
       path.push_front(predecessors[ver]);
-      ver = getNodeReferenceIndex(predecessors[ver]);
+      ver = getNodeReferenceIndex(predecessors[ver], true);
     }
     //Adiciona a origem na lista
     path.push_front(origin);
@@ -588,7 +610,7 @@ namespace Graph {
       Node* k = searchById(b);
       if(k != nullptr) {
         Node* nNode = graph->instanceNewNode(k->id);
-        nNode->setPosition(graph->getCount());
+        nNode->setPosition(graph->getCount() - 1);
       }
       else {
         continue;
@@ -621,18 +643,24 @@ namespace Graph {
     return false;
   }
 
+
+  /**
+   * @brief Algoritmo de Kruskal
+   * 
+   * @param subGraph 
+   */
   void Graph::kruskal(Graph* subGraph) {
     int* parent = new int[subGraph->getCount()];
+    //Inicia o vetor que representa os nós da árvore
     for(int i = 0; i < subGraph->getCount(); i++) {
       parent[i] = i;
     }
+
+    //Pega o grafo em um formato de std::pair
+    // {peso da aresta, {no de origem, no de destino}}
     std::vector<std::pair<int, std::pair<int, int>>> pairs = subGraph->getGraphInPairFormat();
     std::vector<std::pair<int, std::pair<int, int>>> pairsMst;
-    std::cout << "Finish 2 part" << "\n";
     std::sort(pairs.begin(), pairs.end());
-    for(auto b : pairs) {
-      std::cout << "Weight: " << b.first << std::endl;
-    }
     int i, uRep, vRep;
     for(int i = 0; i < pairs.size(); i++) {
       uRep = findSet(parent, subGraph->getNodeReferenceIndex(pairs[i].second.first));
@@ -788,78 +816,65 @@ namespace Graph {
     int order = subgraph->getCount();
 
     std::vector<int> distance;
-    distance.clear();
-
-    //Vector que verifica se o nó já foi visitado;
-    std::vector<bool> visited(order, false);
-
-    //O primeiro inicializado com 0 e os demais com INF;
+    std::vector<bool> isVisited(order, false);
     distance.push_back(0);
-    for(int i = 1;i < order;i++) distance.push_back(INF);
-
-    //Vector com os pais de cada nó, -1 caso não tenha pai;
-    std::vector<int> parent(order, -1);
-
-    subgraph->setAllNodesVisitedFalse();
-
-    Node* node = subgraph->getNode();
-    for(int i = 0;i < order;i++) 
-    {
-
-      //Só marcar visitado caso tenha aresta, pq tava dando bug
-      if(!node->getEdgeCount()){
-        node->visited();
-      } else {
-        parent[node->getPosition()] = node->id;
+    for(int i = 1; i < order; i++) {
+      distance.push_back(INF);
+    }
+    int cont = 0;
+    std::vector<int> agm(order, INF);
+    while(cont < order) {
+      int minPosition = minPos(distance, isVisited);
+      Node* s = subgraph->getNodeByPosition(minPosition);
+      int id = s->id;
+      isVisited[minPosition] = true;
+      Edge* edge = s->getEdge();
+      if(edge == nullptr) {
+        agm[minPosition] = id;
       }
-      
-      //Percorrer cada aresta do nó
-      Edge* edge = node->getEdge();
-      int j = 0;
-      while(j < node->getEdgeCount()) 
-      {
-        Node* v = subgraph->searchById(edge->getTo());
-        int weigth = edge->getWeight();
-
-        if(!(v->beenVisited()) && distance[v->getPosition()] > weigth) {
-          distance[v->getPosition()] = weigth;
-          //atualizando o pai de cada nó dada a posicao;
-          parent[v->getPosition()] = node->id;
+      else {
+        for(int b = 0; b < 1; b++) {
+          int v = edge->getTo();
+          int pos_v = subgraph->getNodeReferenceIndex(v);
+          std::cout << pos_v << "\n";
+          if(!isVisited[pos_v]) {
+            if(edge->getWeight() < distance[pos_v]) {
+              distance[pos_v] = edge->getWeight();
+              agm[pos_v] = id;
+            }
+          }
+          edge = edge->getNext();
         }
-        edge = edge->getNext();
-        j++;
       }
-      node = node->getNext();
+      cont++;
     }
-    //Usado para testar o pai de cada nó;
-    for(int i = 1;i < order;i++) {
-      std::cout << parent[i] << std::endl;
-    }
-    //printPrim(subgraph, parent);
+    printPrim(subgraph, agm);
   }
 
 
   void Graph::printPrim(Graph* subgraph, std::vector<int>& mgt) {
     int peso = 0;
-    std::cout << "\nÁRVORE GERADORA MÍNIMA via Prim\n"
-        << std::endl;
-    std::cout << "graph {" << std::endl;
+    std::ofstream outf;
+
+    outf.open(outputFilePath + "_prim.dot", std::ios::out | std::ios::trunc);
+    std::cout << "ÁRVORE GERADORA MÍNIMA via Prim no arquivo: " << outputFilePath << "_prim.dot" << std::endl;
+    outf << "graph {" << std::endl;
     for (int i = 0; i < subgraph->getCount(); i++)
     {
-        if (mgt[i] != -1)
+        if (mgt[i] != INF)
         {
             int destination = subgraph->getNodeByPosition(i)->id;
             if (mgt[i] == destination)
-                std::cout << "  " << mgt[i] << std::endl;
+                outf << "  " << mgt[i] << std::endl;
             else
             {
-                std::cout << "  " << mgt[i] << " -- " << destination;
-                /*std::cout << " [label = " << subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight() << "]" << std::endl;
-                peso += subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight();*/
+                outf << "  " << mgt[i] << " -- " << destination;
+                outf << " [weight = " << subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight() << "]" << std::endl;
+                /*peso += subgraph->searchById(mgt[i])->searchEdge(destination)->getWeight();*/
             }
         }
     }
-    std::cout << "}" << std::endl;
+    outf << "}" << std::endl;
   }
   
 }

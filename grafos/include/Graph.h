@@ -89,8 +89,34 @@ namespace Graph {
       void algorithmPrim(Graph* subgraph);
       void printPrim(Graph* subgraph, std::vector<int>& mgt);
       void readClusteringFile(std::ifstream& stream) {
-
       };
+
+      int minPos(std::vector<int>& distances, std::vector<bool>& isVisited) {
+        int min = INF;
+        int pos;
+        bool cond = false;
+        for(int i = 0; i < distances.size(); i++) {
+          if(distances[i] < min && isVisited[i] == false) {
+            min = distances[i];
+            pos = i;
+            cond = true;
+          }
+        }
+        if(cond) {
+          return pos;
+        }
+        else {
+          for(int i = 0; i < distances.size(); i++) {
+            if(distances[i] == min && isVisited[i] == false) {
+              min = distances[i];
+              pos = i;
+              cond = true;
+              return pos;
+            }
+          }
+        }
+        return pos;
+      }
 
       std::vector<int> getGraphIds() {
         Node* p = node;
@@ -103,6 +129,7 @@ namespace Graph {
       }
 
       static void printList(std::list<int> path) {
+        if(path.empty()) std::cout << "Caminho infinito" << std::endl;
         int index = 0;
         for(int b : path) {
           if(index == path.size() - 1) {
@@ -179,7 +206,8 @@ namespace Graph {
 
       void setAllNodesVisitedFalse();
       void generateGraphVizRepresentation();
-      int getNodeReferenceIndex(int id); 
+      int getNodeReferenceIndex(int id);
+      int getNodeReferenceIndex(int id, bool t);  
       void deepPath(Node* node);
       void print() {
         std::cout << "Initialize Print directive: " << "\n";
