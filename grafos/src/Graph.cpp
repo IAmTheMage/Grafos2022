@@ -176,23 +176,27 @@ namespace Graph {
     return false;
   }
 
+  /**
+   * @brief Fecho transitivo direto
+   * 
+   * @param id 
+   */
   void Graph::directTransitiveClosure(int id) {
     Utils::PerformanceMetrics* metrics = new Utils::PerformanceMetrics();
     metrics->setupOutputFile("metrics.txt");
     Node* n = searchById(id);
     std::string path(outputFilePath.c_str());
-    #ifdef LINUX
-    struct sysinfo memInfo;
-    long long physMemUsed = memInfo.totalram - memInfo.freeram;
-    //Multiply in next statement to avoid int overflow on right hand side...
-    physMemUsed *= memInfo.mem_unit;
-    metrics->setMemoryUsed(physMemUsed);
-    #endif
+    //Computa o tempo de execução
+    //Criado para já nos prepararmos pro trabalho 2
     #ifdef TEST_CASE
     metrics->setupTestSuit("FileSystem");
     metrics->startClock();
     #endif
-    dt->startGraph(path);
+    if(graphType == NONDIRECTED) {
+      dt->startGraph(path, false);
+    }
+    else dt->startGraph(path);
+    std::cout << "Fecho transitivo direto em: " << path << std::endl;
     Utils::DotType type = getAllNodesConnected(id);
     dt->endGraph();
     #ifdef TEST_CASE
@@ -279,6 +283,12 @@ namespace Graph {
     }
   }
 
+
+  /**
+   * @brief Função para executar o caminho em profundidade auxiliar do fecho transitivo indireto
+   * 
+   * @param node 
+   */
   void Graph::deepPath(Node* node) {
     Node* assistant = nullptr;
     node->visited();
@@ -428,15 +438,18 @@ namespace Graph {
     for(int i = 0; i < this->count; i++) {
       dist[i] = INT_MAX, visited[i] = false;
     }
+    //Pega o indice do primeiro nó
     int nodeReference = getNodeReferenceIndex(origin);
     dist[nodeReference] = 0;
     std::priority_queue<std::pair<int, int>, 
     std::vector<std::pair<int, int>>, 
     std::greater<std::pair<int, int>>> priority;
+    //Coloca o vertice em na fila de prioridade
     priority.push(std::make_pair(dist[nodeReference], origin));
     Node* node = nullptr;
     Edge* edge = nullptr;
     while(!priority.empty()) {
+      //Enquanto a fila não for nula processa o dijkstra para cada nó
       std::pair<int, int> topInQueue = priority.top();
       int selected = topInQueue.second;
       priority.pop();
@@ -556,7 +569,7 @@ namespace Graph {
   }
 
   /**
-   * @brief Função
+   * @brief Função para iniciar os antecessores para o algoritmo de Floyd
    * 
    * @param from 
    * @param to
@@ -673,6 +686,13 @@ namespace Graph {
     printKruskal(pairsMst, subGraph);
   }
 
+
+  /**
+   * @brief Função auxiliar para printar Kruskal
+   * 
+   * @param edges 
+   * @param subGraph 
+   */
   void Graph::printKruskal(std::vector<std::pair<int, std::pair<int, int>>> &edges, Graph* subGraph) {
     std::cout << "ARVORE GERADORA MINIMA VIA KRUSKAL\n";
     std::string data;
@@ -681,20 +701,14 @@ namespace Graph {
     realFilePath.append("_kruskal.dot");
     std::ofstream oof(realFilePath, std::ios::out | std::ios::trunc);
     std::string connector;
-    if(graphType == DIRECTED) {
-      oof << "digraph {\n";
-      connector.append("->");
-    }
-    else {
-      oof << "graph {\n";
-      connector.append("--");
-    }
+    oof << "graph {\n";
+    connector.append(" -- ");
     for(int i = 0; i < edges.size(); i++) {
       if(edges[i].second.first == edges[i].second.second) {
         oof << " " << edges[i].second.first << std::endl;
       }
       else {
-        oof << edges[i].second.first << connector << edges[i].second.second;
+        oof << " " << edges[i].second.first << connector << edges[i].second.second;
         oof << " [weight = " << edges[i].first << "]" << std::endl;
         weight += edges[i].first;
       }
@@ -738,8 +752,7 @@ namespace Graph {
       return returnEdges;
     }
 
-    std::string path(outputFilePath.c_str());
-    path.append("deepPathTree.dot");
+    std::string path("deepPathTree.dot");
     std::cout << path << "\n";
 
     std::vector<Utils::WeightedDot> dots;
@@ -757,15 +770,25 @@ namespace Graph {
     std::vector<int> nodesInThePath;
 
     this->setAllNodesVisitedFalse();
-    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges);
+    deepPathTreeAssistant(vertex, nodesInThePath, dots, returnEdges, nullptr);
 
-    dt->writeOnFile(path, dots, true);
+    if(graphType == DIRECTED) {
+      dt->writeOnFile(path, dots, true);
+    }
+    else {
+      dt->writeOnFile(path, dots, false);
+    }
 
     return returnEdges;
   }
 
+  // Node* vertex: Nó atual
+  // nodesInThePath: nós no caminho atual da árvore
+  // dots: arquivo utilizado para gerar o dot da árvore
+  // returnEdges: arestas de retorno
+  // lastNodeVisited: último nó visitado(caso do grafo não direcionado)
   void Graph::deepPathTreeAssistant(Node* vertex, std::vector<int>& nodesInThePath, 
-  std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges) {
+    std::vector<Utils::WeightedDot>& dots, std::vector<Edge*>& returnEdges, Node* lastNodeVisited) {
     // O vértice passado como parâmetro é visitado
     vertex->visited();
     // nodesInThePath recebe o id do vértice visitado para
@@ -789,9 +812,17 @@ namespace Graph {
       if(assistant->beenVisited()) {
         for(auto i : nodesInThePath) {
           if(assistant->id == i) {
-            // Impressão das arestas de retorno ( Usada em testes)
-            //std::cout << vertex->id << " -> " << i << ", ";
-            returnEdges.push_back(edge);
+            // Se o grafo não for orientado:
+            if(graphType == GraphType::NONDIRECTED) {
+              if(assistant!=lastNodeVisited) {
+                std::cout << vertex->id << " -- " << i << ", ";
+                returnEdges.push_back(edge);
+              }
+            }
+            else if(graphType == GraphType::DIRECTED){
+              std::cout << vertex->id << " -> " << i << ", ";
+              returnEdges.push_back(edge);
+            }
           }
         }
       }
@@ -802,7 +833,7 @@ namespace Graph {
         dot.weight = edge->getWeight();
         dots.push_back(dot);
 
-        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges);
+        deepPathTreeAssistant(assistant, nodesInThePath, dots, returnEdges, vertex);
       }
 
       edge = edge->getNext();
@@ -816,6 +847,7 @@ namespace Graph {
     int order = subgraph->getCount();
 
     std::vector<int> distance;
+    distance.clear();
     std::vector<bool> isVisited(order, false);
     distance.push_back(0);
     for(int i = 1; i < order; i++) {
@@ -833,7 +865,7 @@ namespace Graph {
         agm[minPosition] = id;
       }
       else {
-        for(int b = 0; b < 1; b++) {
+        for(int b = 0; b < s->getEdgeCount(); b++) {
           int v = edge->getTo();
           int pos_v = subgraph->getNodeReferenceIndex(v);
           if(!isVisited[pos_v]) {

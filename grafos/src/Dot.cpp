@@ -80,12 +80,14 @@ namespace Utils {
 
   void Dot::startGraph(std::string path, bool digraph) {
     of.open(path, std::ios::trunc | std::ios::out);
+    this->digraph = digraph;
     if(digraph) {
       data.append("digraph {\n");
     }
     else {
       data.append("graph {\n");
     }
+    of << data;
   }
 
   void Dot::generateDotRepresentation(DotType p) {
@@ -106,7 +108,14 @@ namespace Utils {
   void Dot::outputDotRepresentation(DotType p) {
     if(!p.active || p.connected.size() == 0) return;
     of << p.id;
-    of << " -> {";
+    std::string connector;
+    if(digraph) {
+      connector.append(" -> {"); 
+    }
+    else {
+      connector.append(" -- {");
+    }
+    of << connector;
     for(int i = 0; i < p.connected.size(); i++) {
       of << p.connected[i].id;
       if(i != p.connected.size() - 1) of << ",";

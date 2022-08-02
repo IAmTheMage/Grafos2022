@@ -1,5 +1,0 @@
-graph {
-  3 -- 40 [weight = 56]
-  12 -- 63 [weight = 37]
-  26 -- 73 [weight = 29]
-}
