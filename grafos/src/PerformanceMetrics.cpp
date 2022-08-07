@@ -38,4 +38,10 @@ namespace Utils {
     outputManager << diff.count() << ";" << this->memoryUsed << "KB" << std::endl;
     outputManager.close();
   }
+
+  void PerformanceMetrics::_end() {
+    end = std::chrono::system_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Tempo decorrido para execucao do codigo: " << diff.count();
+  }
 }

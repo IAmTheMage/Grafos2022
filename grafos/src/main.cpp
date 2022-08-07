@@ -17,6 +17,8 @@ int main(int argc, char** argv) {
   std::cout << "8: Caminhamento em profundidade" << std::endl;
   std::cout << "9: Gerar representacao em dot do grafo" << std::endl;
   std::cout << "10: Greedy algoritm" << std::endl;
+  std::cout << "11: Greedy random algoritm" << std::endl;
+  std::cout << "12: Greedy random reactive algoritm" << std::endl;
   int selected;
   std::cin >> selected;
   switch(selected) {
@@ -100,6 +102,13 @@ int main(int argc, char** argv) {
       graph->generateGraphVizRepresentation();
     case 10:
       graph->greedy();
+      break;
+    case 11:
+      graph->randomGreedy();
+      break;
+    case 12:
+      graph->randomReactiveGreedy();
+      break;
     default:
       break;
   }

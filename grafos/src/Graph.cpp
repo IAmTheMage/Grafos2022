@@ -2,6 +2,8 @@
 #include "string.h"
 #include "vector"
 #include "algorithm"
+#include "math.h"
+#include "time.h"
 #ifdef IS_CMAKE
 #include "config.h"
 #endif
@@ -220,8 +222,8 @@ namespace Graph {
     }
     int nodeId = 0;
     weights.erase(weights.begin());
-    this->instanceNewNode(nodeId, weights[0]);  
-    this->node->instanceMultiplesNodes(nodeAmount, weights);  
+    this->instanceNewNode(nodeId, weights[0], clusterInfo.numberOfClusters);  
+    this->node->instanceMultiplesNodes(nodeAmount, weights, clusterInfo.numberOfClusters);  
     clusterInfo.clusters = clusters;
     return clusterInfo;
   }
@@ -371,6 +373,7 @@ namespace Graph {
     std::vector<Node*> v;
     Node* p = node;
     while(p != nullptr) {
+      if(!p->beenVisited()) 
       v.push_back(p);
       p = p->getNext();
     }
@@ -380,24 +383,166 @@ namespace Graph {
     return v;
   }
 
+  void Graph::initClusteringData() {
+    std::vector<Node*> viz = getGraphInVectorFormat();
+    for(int i = 0; i < clusters.size(); i++) {
+      clusters[i].ids.push_back(viz.back()->id);
+      clusters[i].currentWeight += viz.back()->getWeight();
+      searchById(viz.back()->id)->visited();
+      viz.pop_back();
+    }
+  }
+
   void Graph::greedy() {
     std::cout << "Count is: " << count << std::endl;
+    Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
+    performance->setupTestSuit("Greedy");
+    performance->startClock();
+    initClusteringData();
     std::vector<Node*> viz = getGraphInVectorFormat();
-    int index = viz.size();
-    int nInterations = 0;
+    int interactions = 0;
     while(!viz.empty()) {
       for(int i = 0; i < clusters.size(); i++) {
+        interactions++;
         if(viz.empty()) break;
-        clusters[i].ids.push_back(viz.back()->id);
-        clusters[i].currentWeight += viz.back()->getWeight();
-        viz.pop_back();
+        Node* b = searchById(clusters[i].ids[0]);
+        float max = INT_MIN;
+        int addedId;
+        Edge* edge = b->getEdge();
+        
+        while(edge != nullptr) {
+          if(max < edge->getWeight() && !(searchById(edge->getTo())->beenVisited())) {
+            max = edge->getWeight();
+            addedId = edge->getTo();
+          }
+          edge = edge->getNext();
+        }
+        if(max != INT_MIN) {
+          Node* k = searchById(addedId);
+          if(k != nullptr) {
+            if(clusters[i].currentWeight + k->getWeight() < clusters[i].upperLimit) {
+              k->visited();
+              clusters[i].ids.push_back(addedId);
+              clusters[i].currentWeight += k->getWeight();
+              viz.erase(std::remove(viz.begin(), viz.end(), k), viz.end());
+            }
+          }
+        }
       }
     }
-    int ind = 1;
     constructClusterSet();
+    getClusteringInfo();
+    performance->_end();
+    
+  }
+
+  void Graph::randomGreedy() {
+    Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
+    performance->setupTestSuit("Greedy Random");
+    performance->startClock();
+    initClusteringData();
+    std::vector<Node*> viz = getGraphInVectorFormat();
+    int limit = 1;
+    int close = 0;
+    while(!viz.empty()) {
+      srand(time(NULL));
+      int randomIndex = rand() % (count % clusters.size());
+      Node* tpNode = viz[randomIndex];
+      float globalContributedWeight = -9999999.0f;
+      int addId;
+      for(int i = 0; i < clusters.size(); i++) {
+        if(clusters[i].visited) continue;
+        float contributedWeight = 0.0f;
+        for(int ids : clusters[i].ids) {
+          Node* temp = searchById(ids);
+          Edge* edge = temp->searchEdge(tpNode->id);
+          if(edge != nullptr) contributedWeight += edge->getWeight();
+        }
+        if(contributedWeight > globalContributedWeight && clusters[i].currentWeight + tpNode->getWeight() < clusters[i].upperLimit) {
+          globalContributedWeight = contributedWeight;
+          addId = i;
+        } 
+      }
+      clusters[addId].ids.push_back(tpNode->id);
+      clusters[addId].visited = true;
+      clusters[addId].currentWeight += tpNode->getWeight();
+      close++;
+      if(close == clusters.size()) {
+        for(int i = 0; i < clusters.size(); i++) {
+          clusters[i].visited = false;
+        }
+        close = 0;
+      }
+      viz.erase(std::remove(viz.begin(), viz.end(), tpNode), viz.end());
+    }
+    constructClusterSet();
+    getClusteringInfo();
+    performance->_end();
+  }
+
+  void Graph::randomReactiveGreedy() {
+    Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
+    performance->setupTestSuit("Greedy Random Reactive");
+    performance->startClock();
+    initClusteringData();
+    std::vector<Node*> viz = getGraphInVectorFormat();
+    int limit = 1;
+    int close = 0;
+    while(!viz.empty()) {
+      srand(time(NULL));
+      int randomSeed = clusters.size() / 2;
+      if(viz.size() < clusters.size() / 2) randomSeed = viz.size();
+      int randomIndex = rand() % randomSeed;
+      Node* tpNode = viz[randomIndex];
+      int highPriorityCluster;
+      float max = -999999.0f;
+      for(int i = 0; i < clusters.size(); i++) {
+        if(max < tpNode->getSpecificBiasValue(i) && 
+        !(clusters[i].currentWeight + tpNode->getWeight() > clusters[i].upperLimit)
+        ) {
+          max = tpNode->getSpecificBiasValue(i);
+          highPriorityCluster = i;
+        }
+      }
+      clusters[highPriorityCluster].ids.push_back(tpNode->id);
+      clusters[highPriorityCluster].currentWeight += tpNode->getWeight();
+      Edge* edge = tpNode->getEdge();
+      while(edge != nullptr) {
+        searchById(edge->getTo())->updateSpecificBias(highPriorityCluster, edge->getWeight());
+        edge = edge->getNext();
+      }
+      viz.erase(std::remove(viz.begin(), viz.end(), tpNode), viz.end());
+    }
+    constructClusterSet();
+    getClusteringInfo();
+    performance->_end();
+  }
+
+  void Graph::sortByClusterPreference(int clusterId, std::vector<Node*> viz) {
+    std::sort(viz.begin(), viz.end(), [](Node* p, Node* b) {
+      return p->getSpecificBiasValue(p->currentCluster) > b->getSpecificBiasValue(b->currentCluster);
+    });
+  }
+
+  void Graph::getClusteringInfo() {
+    float variation = 0;
+    float totalWeight = 0;
+    float median = 0;
+    int ind = 1;
     for(Cluster cluster: clusters) {
       std::cout << "Cluster: " << ind << " has weight: " << cluster.currentWeight << " and has degree: " << cluster.totalWeight << std::endl;
+      totalWeight += cluster.totalWeight;
+      ind++;
     }
+    median = totalWeight / clusters.size();
+    for(Cluster cluster: clusters) {
+      variation += (cluster.totalWeight - median) * (cluster.totalWeight - median);
+    }
+    variation /= (clusters.size() - 1);
+    float standardDeviation = sqrt(variation);
+    std::cout << "Cluster sum:" << totalWeight << std::endl;
+    std::cout << "Cluster media: " << median << std::endl;
+    std::cout << "Desvio padrao: " << standardDeviation << std::endl;
   }
 
 
@@ -413,7 +558,6 @@ namespace Graph {
         for(int toId : reference) {
           Edge* temp = p->searchEdge(toId);
           if(temp != nullptr) {
-            std::cout << "nao e nulo" << std::endl;
             clusters[index].totalWeight += temp->getWeight();
           }
         }
