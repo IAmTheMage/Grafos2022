@@ -39,9 +39,10 @@ namespace Utils {
     outputManager.close();
   }
 
-  void PerformanceMetrics::_end() {
+  float PerformanceMetrics::_end() {
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = end - start;
     std::cout << "Tempo decorrido para execucao do codigo: " << diff.count();
+    return diff.count();
   }
 }

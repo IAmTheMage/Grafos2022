@@ -4,6 +4,7 @@
 #include "algorithm"
 #include "math.h"
 #include "time.h"
+#include "cmath"
 #ifdef IS_CMAKE
 #include "config.h"
 #endif
@@ -393,45 +394,50 @@ namespace Graph {
     }
   }
 
+  float Graph::calculateImpact(Node* p, int clusterId) {
+    Cluster cluster = clusters[clusterId];
+    float weight = 0.0f;
+    for(int ids : cluster.ids) {
+      Edge* edge = p->searchEdge(ids);
+      if(edge != nullptr)
+      weight += edge->getWeight();
+    }
+    float median = weight / cluster.ids.size();
+
+    return median;
+  }
+
   void Graph::greedy() {
-    std::cout << "Count is: " << count << std::endl;
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy");
     performance->startClock();
+    int tNodes;
     initClusteringData();
     std::vector<Node*> viz = getGraphInVectorFormat();
-    int interactions = 0;
-    while(!viz.empty()) {
+    tNodes = 20;
+    int limit = 1;
+    int close = 0;
+    bool cond = false;
+    while(viz.size() != 0) {
       for(int i = 0; i < clusters.size(); i++) {
-        interactions++;
-        if(viz.empty()) break;
-        Node* b = searchById(clusters[i].ids[0]);
-        float max = INT_MIN;
-        int addedId;
-        Edge* edge = b->getEdge();
-        
-        while(edge != nullptr) {
-          if(max < edge->getWeight() && !(searchById(edge->getTo())->beenVisited())) {
-            max = edge->getWeight();
-            addedId = edge->getTo();
-          }
-          edge = edge->getNext();
+        std::vector<Impact> impacts;
+        if(viz.size() < tNodes) tNodes = viz.size();
+        if(viz.size() == 0) break;
+        for(int b = 0; b < tNodes; b++) {
+          int randomIndex = b;
+          impacts.push_back({calculateImpact(viz[randomIndex], i), randomIndex});         
         }
-        if(max != INT_MIN) {
-          Node* k = searchById(addedId);
-          if(k != nullptr) {
-            if(clusters[i].currentWeight + k->getWeight() < clusters[i].upperLimit) {
-              k->visited();
-              clusters[i].ids.push_back(addedId);
-              clusters[i].currentWeight += k->getWeight();
-              viz.erase(std::remove(viz.begin(), viz.end(), k), viz.end());
-            }
-          }
-        }
+        std::sort(impacts.begin(), impacts.end(), [](Impact& impact1, Impact& impact2) {
+          return impact1.impact > impact2.impact;
+        });
+        if(viz[impacts[0].id]->getWeight() + clusters[i].currentWeight > clusters[i].upperLimit) continue;
+        clusters[i].ids.push_back(viz[impacts[0].id]->id);
+        clusters[i].currentWeight += viz[impacts[0].id]->getWeight();
+        viz.erase(std::remove(viz.begin(), viz.end(), viz[impacts[0].id]), viz.end());
       }
     }
     constructClusterSet();
-    getClusteringInfo();
+    std::cout << "Greedy result is: " << getClusteringInfo() << std::endl;
     performance->_end();
     
   }
@@ -439,83 +445,201 @@ namespace Graph {
   void Graph::randomGreedy() {
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy Random");
+    int tNodes;
+    std::cout << "Indique o alfa: " << std::endl;
+    float alpha = 0.05f;
+    std::cin >> alpha;
     performance->startClock();
-    initClusteringData();
-    std::vector<Node*> viz = getGraphInVectorFormat();
-    int limit = 1;
-    int close = 0;
-    while(!viz.empty()) {
-      srand(time(NULL));
-      int randomIndex = rand() % (count % clusters.size());
-      Node* tpNode = viz[randomIndex];
-      float globalContributedWeight = -9999999.0f;
-      int addId;
-      for(int i = 0; i < clusters.size(); i++) {
-        if(clusters[i].visited) continue;
-        float contributedWeight = 0.0f;
-        for(int ids : clusters[i].ids) {
-          Node* temp = searchById(ids);
-          Edge* edge = temp->searchEdge(tpNode->id);
-          if(edge != nullptr) contributedWeight += edge->getWeight();
-        }
-        if(contributedWeight > globalContributedWeight && clusters[i].currentWeight + tpNode->getWeight() < clusters[i].upperLimit) {
-          globalContributedWeight = contributedWeight;
-          addId = i;
-        } 
-      }
-      clusters[addId].ids.push_back(tpNode->id);
-      clusters[addId].visited = true;
-      clusters[addId].currentWeight += tpNode->getWeight();
-      close++;
-      if(close == clusters.size()) {
-        for(int i = 0; i < clusters.size(); i++) {
-          clusters[i].visited = false;
-        }
-        close = 0;
-      }
-      viz.erase(std::remove(viz.begin(), viz.end(), tpNode), viz.end());
-    }
-    constructClusterSet();
-    getClusteringInfo();
+    std::cout << "Resultado para Guloso randomizado: " << this->generateSolution(alpha) << std::endl;
     performance->_end();
   }
 
   void Graph::randomReactiveGreedy() {
+    std::ofstream offff("performance.txt", std::ios::out | std::ios::trunc);
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy Random Reactive");
     performance->startClock();
+    std::vector<float> alphas;
+
+    alphas.push_back(0.07);
+    alphas.push_back(0.13);
+    alphas.push_back(0.15);
+    alphas.push_back(0.21);
+    alphas.push_back(0.47);
+    alphas.push_back(0.48);
+    alphas.push_back(0.49);
+    alphas.push_back(0.51);
+    alphas.push_back(0.22);
+    alphas.push_back(0.27);
+    alphas.push_back(0.18);
+    alphas.push_back(0.28);
+    alphas.push_back(0.34);
+    alphas.push_back(0.39);
+    alphas.push_back(0.78);
+    alphas.push_back(0.81);
+    alphas.push_back(0.42);
+    alphas.push_back(0.09);
+    alphas.push_back(0.57);
+
+
+    std::vector<float> medians;
+    std::vector<float> sums;
+    std::vector<float> bestSolutions;
+    std::vector<float> probabilities;
+    std::vector<float> q;
+    std::vector<int> solutionsAmount;
+
+
+    int sizeT = alphas.size();
+
+    instanceVectors(medians, probabilities, sizeT);
+
+    for(int i = 0; i < sizeT; i++) {
+      bestSolutions.push_back(0.0f);
+      q.push_back(0.0f);
+      sums.push_back(0.0f);
+      solutionsAmount.push_back(0);
+    }
+
+
+    int numInterations;
+    int numToUpdate;
+
+    std::cout << "Digite o numero de interações: " << std::endl;
+    std::cin >> numInterations;
+    std::cout << "Digite o numero de blocos para atualizacao: " << std::endl;
+    std::cin >> numToUpdate;
+
+    int index = 0;
+    while(index < numInterations) {
+      if(index != 0 && index % numToUpdate == 0) {
+        std::cout << "Probabilities: " << std::endl;
+        for(int i = 0; i < probabilities.size(); i++) {
+          std::cout << probabilities[i] << ' ';
+        }
+        std::cout << std::endl;
+        updateProbabilities(medians, probabilities, bestSolutions, q);
+      }
+      int selected = selectProbabilities(probabilities);
+      float selectedAlpha = alphas[selected];
+      float alphaSolution = generateSolution(selectedAlpha);
+      updateMedians(medians, 
+      alphaSolution, 
+      alphas, sums, selectedAlpha, solutionsAmount
+      );
+      if(bestSolutions[selected] < alphaSolution) {
+        bestSolutions[selected] = alphaSolution;
+      }
+      std::cout << "Alpha result: " << alphaSolution << std::endl;
+      index++;
+      this->cleanVisited();
+      this->cleanClusters();
+    }
+    std::sort(bestSolutions.begin(), bestSolutions.end());
+    std::cout << "Best solution is: " << bestSolutions[bestSolutions.size() - 1] << std::endl;
+    float metrics = performance->_end();
+    offff << "Time: " << metrics << std::endl;
+    offff.close();
+  }
+
+  void Graph::cleanClusters() {
+    for(int i = 0; i < clusters.size(); i++) {
+      clusters[i].ids.clear();
+      clusters[i].currentWeight = 0.0f;
+      clusters[i].visited = false;
+      clusters[i].totalWeight = 0.0f;
+    }
+  }
+
+  float Graph::generateSolution(float alpha) {
+    srand(time(NULL));
+    int tNodes;
     initClusteringData();
     std::vector<Node*> viz = getGraphInVectorFormat();
+    tNodes = (int)((viz.size() - 1) * alpha);
     int limit = 1;
     int close = 0;
-    while(!viz.empty()) {
-      srand(time(NULL));
-      int randomSeed = clusters.size() / 2;
-      if(viz.size() < clusters.size() / 2) randomSeed = viz.size();
-      int randomIndex = rand() % randomSeed;
-      Node* tpNode = viz[randomIndex];
-      int highPriorityCluster;
-      float max = -999999.0f;
+    bool cond = false;
+    while(viz.size() != 0) {
       for(int i = 0; i < clusters.size(); i++) {
-        if(max < tpNode->getSpecificBiasValue(i) && 
-        !(clusters[i].currentWeight + tpNode->getWeight() > clusters[i].upperLimit)
-        ) {
-          max = tpNode->getSpecificBiasValue(i);
-          highPriorityCluster = i;
+        std::vector<Impact> impacts;
+        if(viz.size() < tNodes) tNodes = viz.size();
+        if(viz.size() == 0) break;
+        for(int b = 0; b < tNodes; b++) {
+          int randomIndex = rand() % tNodes;
+          impacts.push_back({calculateImpact(viz[randomIndex], i), randomIndex});         
         }
+        std::sort(impacts.begin(), impacts.end(), [](Impact& impact1, Impact& impact2) {
+          return impact1.impact > impact2.impact;
+        });
+        if(viz[impacts[0].id]->getWeight() + clusters[i].currentWeight > clusters[i].upperLimit) continue;
+        clusters[i].ids.push_back(viz[impacts[0].id]->id);
+        clusters[i].currentWeight += viz[impacts[0].id]->getWeight();
+        viz.erase(std::remove(viz.begin(), viz.end(), viz[impacts[0].id]), viz.end());
       }
-      clusters[highPriorityCluster].ids.push_back(tpNode->id);
-      clusters[highPriorityCluster].currentWeight += tpNode->getWeight();
-      Edge* edge = tpNode->getEdge();
-      while(edge != nullptr) {
-        searchById(edge->getTo())->updateSpecificBias(highPriorityCluster, edge->getWeight());
-        edge = edge->getNext();
-      }
-      viz.erase(std::remove(viz.begin(), viz.end(), tpNode), viz.end());
     }
     constructClusterSet();
-    getClusteringInfo();
-    performance->_end();
+    return getClusteringInfo();
+  }
+
+  void Graph::updateMedians(
+    std::vector<float>& medians,
+    float solution,
+    std::vector<float> alphas, 
+    std::vector<float> sums,
+    float alpha,
+    std::vector<int> solutionsAmount
+  ) {
+    int index;
+    for(int i = 0; i < alphas.size(); i++) {
+      if(alpha == alphas[i]) {
+        index = i;
+        break;
+      } 
+    }
+    sums[index] += solution;
+    solutionsAmount[index] += solutionsAmount[index] + 1;
+    medians[index] = sums[index] / solutionsAmount[index];
+  }
+
+  void Graph::instanceVectors(std::vector<float>& medians, std::vector<float>& prob, int size) {
+    float baseProbability = 1.0f / size;
+    float baseMedian = 1.0f;
+    for(int i = 0; i < size; i++) {
+      prob.push_back(baseProbability);
+      medians.push_back(baseMedian);
+    }
+  }
+
+  int Graph::selectProbabilities(std::vector<float>& prob) {
+    std::vector<int> indexes;
+    for(int i = 0; i < prob.size(); i++) {
+      for(int j = 0; j < (int)(prob[i] * 100); j++) {
+        indexes.push_back(i);
+      }
+    }
+    int random = rand() % indexes.size();
+    return indexes[random];
+  }
+
+  void Graph::updateProbabilities(
+    std::vector<float>& median, 
+    std::vector<float>& probabilities,
+    std::vector<float>& bestSolutions,
+    std::vector<float>& q
+  ) 
+  {
+    float somaQ = 0.0f;
+    for(int i = 0; i < median.size(); i++) {
+      float tmp =  bestSolutions[i] / median[i];
+      q[i] = std::pow((tmp), 50);
+      somaQ += q[i];
+    }
+    for(int i = 0; i < median.size(); i++) {
+      if(q[i] / somaQ != 0.0f)
+      probabilities[i] = q[i] / somaQ;
+    }
+
   }
 
   void Graph::sortByClusterPreference(int clusterId, std::vector<Node*> viz) {
@@ -524,13 +648,13 @@ namespace Graph {
     });
   }
 
-  void Graph::getClusteringInfo() {
+  float Graph::getClusteringInfo() {
     float variation = 0;
     float totalWeight = 0;
     float median = 0;
     int ind = 1;
     for(Cluster cluster: clusters) {
-      std::cout << "Cluster: " << ind << " has weight: " << cluster.currentWeight << " and has degree: " << cluster.totalWeight << std::endl;
+      //std::cout << "Cluster: " << ind << " has weight: " << cluster.currentWeight << " and has degree: " << cluster.totalWeight << std::endl;
       totalWeight += cluster.totalWeight;
       ind++;
     }
@@ -540,9 +664,8 @@ namespace Graph {
     }
     variation /= (clusters.size() - 1);
     float standardDeviation = sqrt(variation);
-    std::cout << "Cluster sum:" << totalWeight << std::endl;
-    std::cout << "Cluster media: " << median << std::endl;
     std::cout << "Desvio padrao: " << standardDeviation << std::endl;
+    return totalWeight;
   }
 
 

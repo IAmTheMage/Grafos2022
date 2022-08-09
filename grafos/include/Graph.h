@@ -11,6 +11,8 @@
 #include "list"
 #define INF INT_MAX
 
+#define HIGH_IMPACT_VALUE 0.2
+
 namespace Graph {
   #ifndef GRAPH
   #define GRAPH
@@ -39,6 +41,7 @@ namespace Graph {
     float totalWeight = 0;
     std::vector<int> ids;
     int currentWeight = 0;
+    bool visited = false;
   };
 
   struct ClusterInfo {
@@ -48,11 +51,34 @@ namespace Graph {
     std::vector<Cluster> clusters;
   };
 
+  struct ClusterComparison {
+    bool operator() (Cluster& a, Cluster& b) {
+      return a.ids.size() < b.ids.size();
+    }
+  };
+  
+  struct Impact {
+    float impact;
+    int id;
+  };
+
   class Graph {
     public:
       Graph(char** argv);
       Graph(EdgeType edge, GraphType graph);
-      ~Graph() {};
+      ~Graph() {
+        Node* b = this->node;
+        Node* p = nullptr;
+        while(b != nullptr) {
+          Edge* k = b->getEdge();
+          while(k != nullptr) {
+            delete k;
+          }
+          p = b;
+          b = b->getNext();
+          delete p;
+        }
+      };
       int countNumberOfNodes() {return count;};
       void instanceNewNode() {
         if(count == 0) {
@@ -96,6 +122,25 @@ namespace Graph {
           return p;
         }
       }
+
+      Node* instanceNewNode(int id, int weight, int biasCount) {
+        if(count == 0) {
+          node = new Node();
+          node->id = id;
+          node->setWeight(weight);
+          node->setBiasCount(biasCount);
+          count++;
+          return node;
+        }
+        else {
+          Node* p = node->getLastBeforeNull();
+          p->instanceNew(id);
+          p->setWeight(weight);
+          p->setBiasCount(biasCount);
+          count++;
+          return p;
+        }
+      }
       Node* searchById(int id);
       std::list<int> dijkstra(int id, int destination);
       std::list<int> shortestPath(int origin ,int destination, int* predecessors);
@@ -106,6 +151,7 @@ namespace Graph {
       std::vector<Utils::DotType> generateDotTypeVector();
       void constructClusterSet();
       float clusteringCoeficient(int id);
+      void sortByClusterPreference(int clusterId, std::vector<Node*> viz);
       float clusteringGlobalCoeficient();
       int neighborsConnected(int id, int* p, int size);
       Node* getNodeByPosition(int id);
@@ -122,9 +168,11 @@ namespace Graph {
       void algorithmPrim(Graph* subgraph);
       void printPrim(Graph* subgraph, std::vector<int>& mgt);
       void readClusteringFile(std::string path);
+      float getClusteringInfo();
       ClusterInfo readClusteringFirstPart(std::string data);
       std::vector<Node*> getGraphInVectorFormat();
       void addClusteringEdge(std::string data);
+      void initClusteringData();
       void printClusteringEdges(int id) {
         Node* p = searchById(id);
         Edge* edge = p->getEdge();
@@ -134,6 +182,31 @@ namespace Graph {
         }
       }
       void greedy();
+      void randomGreedy();
+      void randomReactiveGreedy();
+
+      float generateSolution(float alpha);
+
+      float calculateImpact(Node* p, int clusterId);
+      int selectProbabilities(std::vector<float>& prob);
+      void instanceVectors(std::vector<float>& medians, std::vector<float>& prob, int size);
+      void updateProbabilities(
+        std::vector<float>& median, 
+        std::vector<float>& probabilities,
+        std::vector<float>& bestSolutions,
+        std::vector<float>& q
+      );
+
+      void updateMedians(
+        std::vector<float>& medians,
+        float solution,
+        std::vector<float> alphas, 
+        std::vector<float> sums,
+        float alpha,
+        std::vector<int> solutionsAmount
+      );
+
+      void cleanClusters();
 
       std::vector<int> getGraphIds() {
         Node* p = node;

@@ -17,6 +17,7 @@ namespace Utils {
       void setupTestSuit(std::string suit);
       void startClock();
       void endClock();
+      float _end();
       void setMemoryUsed(long long _memory) {
         this->memoryUsed = _memory;
       }
