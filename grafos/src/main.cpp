@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     case 9:
       graph->generateGraphVizRepresentation();
     case 10:
-      graph->greedy();
+      graph->greedyResult();
       break;
     case 11:
       graph->randomGreedy();

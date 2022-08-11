@@ -4,6 +4,7 @@
 #include "algorithm"
 #include "math.h"
 #include "time.h"
+#include "map"
 #include "cmath"
 #ifdef IS_CMAKE
 #include "config.h"
@@ -23,18 +24,8 @@
 namespace Graph {
   Graph::Graph(char** args) {
     dt = new Utils::Dot();
-    if(strcmp(args[4], "1") == 0) {
-      edgeType = EdgeType::PONDERED;
-    }
-    else {
-      edgeType = EdgeType::NONPONDERED;
-    }
-    if(strcmp(args[3], "1") == 0) {
-      graphType = GraphType::DIRECTED;
-    }
-    else {
-      graphType = GraphType::NONDIRECTED;
-    }
+    edgeType = EdgeType::PONDERED;
+    graphType = GraphType::NONDIRECTED;
     std::string in(args[1]);
     std::string temp(args[2]);
     outputFilePath = temp;
@@ -75,59 +66,21 @@ namespace Graph {
     if(ip.is_open()) {
       std::string b;
       std::getline(ip, b);
-      int numberOfNodes = std::atoi(b.c_str());
+      std::stringstream sstream(b);
+      std::string tp;
+      int numberOfNodes = 0;
+      while(std::getline(sstream, tp, ' ')) {
+        numberOfNodes++;
+      }
+      
       std::vector<int> values;
-      if(b.size() == 1) {
-        while(getline(ip, b)) {
-          std::string s;
-          std::stringstream temp(b);
-          if(edgeType == PONDERED) {
-            while(getline(temp, s, ' ')) {
-              values.push_back(std::atoi(s.c_str()));
-            }
-            Node* p = this->searchById(values[0]);
-            if(p == nullptr) {
-              p = instanceNewNode(values[0]);
-              p->setPosition(this->count - 1);
-            }
-            Node* s = this->searchById(values[1]);
-            if(s == nullptr) {
-              s = instanceNewNode(values[1]);
-              s->setPosition(this->count - 1);
-            }
-            p->makeRelationship(values[1], values[2]);
-            
-            if(graphType == GraphType::NONDIRECTED) {
-              s->makeRelationship(values[0], values[2]);
-              
-            }
-            values.clear();
-          }
-          else {
-            while(getline(temp, s, ' ')) {
-              values.push_back(std::atoi(s.c_str()));
-            }
-            Node* p = this->searchById(values[0]);
-            if(p == nullptr) {
-              p = instanceNewNode(values[0]);
-              p->setPosition(this->count - 1);
-            }
-            p->makeRelationship(values[1], 1);
-            Node* s = this->searchById(values[1]);
-            if(s == nullptr) {
-              s = instanceNewNode(values[1]);
-              s->setPosition(this->count - 1);
-            }
-            if(graphType == GraphType::NONDIRECTED) {
-              s->makeRelationship(values[0], 1);
-            }
-            values.clear();
-          }
-        }
+      if(numberOfNodes == 1) {
         ip.close();
+        readNCSFile(in);
       }
       else {
         std::cout << "Clustering file" << std::endl;
+        ip.close();
         readClusteringFile(in);
       }
     }
@@ -135,6 +88,47 @@ namespace Graph {
       std::cout << "Is close" << "\n";
     }
     std::cout << "Grafo gerado" << std::endl;
+  }
+
+  void Graph::readNCSFile(std::string in) {
+    std::ifstream ip(in, std::ios::in);
+    int numberOfNodes;
+    int numberOfClusters;
+    int weightOfClusters;
+    std::string temp;
+    std::getline(ip, temp);
+    numberOfNodes = std::atoi(temp.c_str());
+    std::getline(ip, temp);
+    numberOfClusters = std::atoi(temp.c_str());
+    std::getline(ip, temp);
+    weightOfClusters = std::atoi(temp.c_str());
+    std::cout << "Number of nodes is: " << numberOfNodes << std::endl;
+    std::cout << "Number of clusters is: " << numberOfClusters << std::endl;
+    std::cout << "Weight of clusters: " << weightOfClusters << std::endl;
+    for(int i = 0; i < numberOfClusters; i++) {
+      Cluster cluster;
+      cluster.lowerLimit = 0;
+      cluster.totalWeight = 0;
+      cluster.upperLimit = weightOfClusters;
+      clusters.push_back(cluster);
+    }
+    std::vector<int> nodeWeights;
+    for(int i = 0; i < numberOfNodes; i++) {
+      std::getline(ip, temp);
+      instanceNewNode(i, std::atoi(temp.c_str()));
+    }
+    for(int i = 0; i < numberOfNodes; i++) {
+      for(int j = 0; j < numberOfNodes; j++) {
+        std::getline(ip, temp, ' ');
+        searchById(i)->makeRelationship(j, std::atoi(temp.c_str()));
+      }
+    } 
+    Node* p = searchById(0);
+    Edge* edge = p->getEdge();
+    while(edge != nullptr) {
+      std::cout << "Edge: " << edge->getWeight() << std::endl;
+      edge = edge->getNext();
+    }
   }
 
   void Graph::readClusteringFile(std::string path) {
@@ -370,6 +364,11 @@ namespace Graph {
     file.close();
   }
 
+  /**
+   * @brief Recebe o grafo em um formato vetorial (Util para ordenar)
+   * 
+   * @return std::vector<Node*> 
+   */
   std::vector<Node*> Graph::getGraphInVectorFormat() {
     std::vector<Node*> v;
     Node* p = node;
@@ -378,12 +377,17 @@ namespace Graph {
       v.push_back(p);
       p = p->getNext();
     }
+    //Ordena o grafo baseado nos bias criados
     std::sort(v.begin(), v.end(), [](Node* n, Node* b) {
       return n->getClusteringRelativeValue() < b->getClusteringRelativeValue();
     });
     return v;
   }
 
+  /**
+   * @brief Função para iniciar cada cluster com 1 vértice
+   * 
+   */
   void Graph::initClusteringData() {
     std::vector<Node*> viz = getGraphInVectorFormat();
     for(int i = 0; i < clusters.size(); i++) {
@@ -394,6 +398,13 @@ namespace Graph {
     }
   }
 
+  /**
+   * @brief Calcula o impacto de determinado vértice dentro de um cluster
+   * 
+   * @param p 
+   * @param clusterId 
+   * @return float 
+   */
   float Graph::calculateImpact(Node* p, int clusterId) {
     Cluster cluster = clusters[clusterId];
     float weight = 0.0f;
@@ -402,22 +413,28 @@ namespace Graph {
       if(edge != nullptr)
       weight += edge->getWeight();
     }
-    float median = weight / cluster.ids.size();
-
-    return median;
+    return weight;
   }
 
-  void Graph::greedy() {
+  /**
+   * @brief Algoritmo guloso
+   * 
+   * @return float 
+   */
+  float Graph::greedy() {
+    //Iniciando execução
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy");
     performance->startClock();
     int tNodes;
     initClusteringData();
     std::vector<Node*> viz = getGraphInVectorFormat();
-    tNodes = 20;
+    tNodes = viz.size();
     int limit = 1;
     int close = 0;
     bool cond = false;
+    //Enquanto o tamanho do vetor de candidatos não for zero
+    //Executa a verificação de impacto para os proximos 20 nós
     while(viz.size() != 0) {
       for(int i = 0; i < clusters.size(); i++) {
         std::vector<Impact> impacts;
@@ -427,6 +444,8 @@ namespace Graph {
           int randomIndex = b;
           impacts.push_back({calculateImpact(viz[randomIndex], i), randomIndex});         
         }
+
+        //Ordena o vetor de impactos para pegar o com maior impacto
         std::sort(impacts.begin(), impacts.end(), [](Impact& impact1, Impact& impact2) {
           return impact1.impact > impact2.impact;
         });
@@ -437,11 +456,24 @@ namespace Graph {
       }
     }
     constructClusterSet();
-    std::cout << "Greedy result is: " << getClusteringInfo() << std::endl;
-    performance->_end();
-    
+    float time = performance->_end();
+    float r = getClusteringInfo();
+    std::string resultStr = getClustersStateInStringFormat(r, 1);
+    std::ofstream off(outputFilePath, std::ios::trunc | std::ios::out);
+    off << "Tempo decorrido: " << time << std::endl << resultStr;
+    off.close();
+    return r;
   }
 
+  void Graph::greedyResult() {
+    float s = greedy();
+    std::cout << "Resultado para o algoritmo guloso: " << s << std::endl;
+  }
+
+  /**
+   * @brief Algoritmo guloso randomizado
+   * 
+  */
   void Graph::randomGreedy() {
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy Random");
@@ -450,17 +482,28 @@ namespace Graph {
     float alpha = 0.05f;
     std::cin >> alpha;
     performance->startClock();
-    std::cout << "Resultado para Guloso randomizado: " << this->generateSolution(alpha) << std::endl;
-    performance->_end();
+    float solution = this->generateSolution(alpha);
+    std::cout << "Resultado para Guloso randomizado: " << solution << std::endl;
+    std::string resultStr = getClustersStateInStringFormat(solution, alpha);
+    std::ofstream off(outputFilePath, std::ios::trunc | std::ios::out);
+    float time = performance->_end();
+    off << "Tempo decorrido: " << time << std::endl << resultStr;
   }
 
+  /**
+   * @brief Guloso randomizado reativo adaptativo
+   * 
+   */
   void Graph::randomReactiveGreedy() {
-    std::ofstream offff("performance.txt", std::ios::out | std::ios::trunc);
     Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
     performance->setupTestSuit("Greedy Random Reactive");
     performance->startClock();
+
+    //Vetor contendo os alfas selecionados
     std::vector<float> alphas;
 
+
+    alphas.push_back(0.05);
     alphas.push_back(0.07);
     alphas.push_back(0.13);
     alphas.push_back(0.15);
@@ -476,24 +519,29 @@ namespace Graph {
     alphas.push_back(0.34);
     alphas.push_back(0.39);
     alphas.push_back(0.78);
-    alphas.push_back(0.81);
     alphas.push_back(0.42);
     alphas.push_back(0.09);
     alphas.push_back(0.57);
+    alphas.push_back(0.81);
 
 
-    std::vector<float> medians;
-    std::vector<float> sums;
-    std::vector<float> bestSolutions;
-    std::vector<float> probabilities;
-    std::vector<float> q;
+    std::vector<float> medians; //Vetor de médias
+    std::vector<float> sums; // Vetor de somas (suporte para as médias)
+    std::vector<float> bestSolutions; // Vetor para armazenar a melhor solução para cada alfa
+    std::vector<float> probabilities; // Vetor de probabilidades de cada alfa
+    std::vector<float> q; // Suporte para atualização de probabilidades de cada alfa
     std::vector<int> solutionsAmount;
+    std::map<int, std::string> clustersInfo; //Hash contendo a representação em string dos resultados, utilizado para analise e para armazenamento no arquivo de saída
 
 
     int sizeT = alphas.size();
 
-    instanceVectors(medians, probabilities, sizeT);
+    instanceVectors(medians, probabilities, sizeT); //Instancia os vetores de probabilidades e médias
 
+
+    /*
+      Inicia todos os vetores auxiliares com seus valores mínimos.
+    */
     for(int i = 0; i < sizeT; i++) {
       bestSolutions.push_back(0.0f);
       q.push_back(0.0f);
@@ -502,8 +550,8 @@ namespace Graph {
     }
 
 
-    int numInterations;
-    int numToUpdate;
+    int numInterations; //Número de interações
+    int numToUpdate; // Número de interações até a atualização das probabilidades
 
     std::cout << "Digite o numero de interações: " << std::endl;
     std::cin >> numInterations;
@@ -512,36 +560,49 @@ namespace Graph {
 
     int index = 0;
     while(index < numInterations) {
+      //Caso o index atual seja dívisivel pelo numero de blocos, atualiza as probabilidades
       if(index != 0 && index % numToUpdate == 0) {
         std::cout << "Probabilities: " << std::endl;
         for(int i = 0; i < probabilities.size(); i++) {
           std::cout << probabilities[i] << ' ';
         }
         std::cout << std::endl;
-        updateProbabilities(medians, probabilities, bestSolutions, q);
+        updateProbabilities(medians, probabilities, bestSolutions, q); //Atualiza as probabilidades
       }
       int selected = selectProbabilities(probabilities);
       float selectedAlpha = alphas[selected];
+      std::cout << selectedAlpha << std::endl;
       float alphaSolution = generateSolution(selectedAlpha);
+      //Atualiza as médias das melhores soluções
       updateMedians(medians, 
       alphaSolution, 
       alphas, sums, selectedAlpha, solutionsAmount
       );
+      //Caso a melhor solução do alfa atual seja melhor que a melhor solução já encontrada
+      //Atualiza o vetor com as melhores soluções
       if(bestSolutions[selected] < alphaSolution) {
         bestSolutions[selected] = alphaSolution;
+        clustersInfo[alphaSolution] = getClustersStateInStringFormat(alphaSolution, selectedAlpha);
       }
-      std::cout << "Alpha result: " << alphaSolution << std::endl;
-      index++;
+      std::cout << "Alpha result: " << alphaSolution << " in interaction: " << index << std::endl;
       this->cleanVisited();
       this->cleanClusters();
+      index++;
     }
+    //Ordena o vetor para obter a melhor solução
     std::sort(bestSolutions.begin(), bestSolutions.end());
-    std::cout << "Best solution is: " << bestSolutions[bestSolutions.size() - 1] << std::endl;
+    std::ofstream off(outputFilePath, std::ios::trunc | std::ios::out);
     float metrics = performance->_end();
-    offff << "Time: " << metrics << std::endl;
-    offff.close();
+    off << "Tempo de execucao: " << metrics << std::endl << clustersInfo[bestSolutions[bestSolutions.size() - 1]];
+    off.close();
+    std::cout << "Best solution is: " << bestSolutions[bestSolutions.size() - 1] << std::endl;
   }
 
+
+  /**
+   * @brief Limpa o estado de todos os clusters
+   * 
+   */
   void Graph::cleanClusters() {
     for(int i = 0; i < clusters.size(); i++) {
       clusters[i].ids.clear();
@@ -551,37 +612,68 @@ namespace Graph {
     }
   }
 
+  /**
+   * @brief Função auxiliar para gerar uma solução viavel para determinado alfa
+   * 
+   * @param alpha 
+   * @return float 
+   */
   float Graph::generateSolution(float alpha) {
-    srand(time(NULL));
     int tNodes;
+    //Inicia todos os clusters com 1 vértice
     initClusteringData();
     std::vector<Node*> viz = getGraphInVectorFormat();
-    tNodes = (int)((viz.size() - 1) * alpha);
+    tNodes = (int)((viz.size() - 1) * alpha) != 0 ? (int)((viz.size() - 1) * alpha) : 1;
+    //Caso o resultado do alfa seja 1 executa o guloso
+    if(tNodes == 1) {
+      return greedy();
+    }
     int limit = 1;
     int close = 0;
     bool cond = false;
+    //Quantidade de nós analisados por cada interação
+    //Enquanto viz não for vazio executa a heuristica
     while(viz.size() != 0) {
+      srand(time(NULL));
       for(int i = 0; i < clusters.size(); i++) {
+        //Vetor de impactos para cada vértice atualizado
         std::vector<Impact> impacts;
-        if(viz.size() < tNodes) tNodes = viz.size();
-        if(viz.size() == 0) break;
-        for(int b = 0; b < tNodes; b++) {
-          int randomIndex = rand() % tNodes;
-          impacts.push_back({calculateImpact(viz[randomIndex], i), randomIndex});         
+        //Caso o tamanho de viz seja menor que getter, tNodes é igual a viz.size()
+        if((int)((viz.size() - 1) * alpha) <= 5) {
+          tNodes = viz.size();
         }
-        std::sort(impacts.begin(), impacts.end(), [](Impact& impact1, Impact& impact2) {
-          return impact1.impact > impact2.impact;
-        });
-        if(viz[impacts[0].id]->getWeight() + clusters[i].currentWeight > clusters[i].upperLimit) continue;
-        clusters[i].ids.push_back(viz[impacts[0].id]->id);
-        clusters[i].currentWeight += viz[impacts[0].id]->getWeight();
-        viz.erase(std::remove(viz.begin(), viz.end(), viz[impacts[0].id]), viz.end());
+        if(viz.size() == 0) break;
+        for(int b = 0; b < viz.size(); b++) {
+          impacts.push_back({calculateImpact(viz[viz.size() - 1 - b], i), viz.size() - 1 - b});         
+        }
+        if(tNodes > 1) {
+          //Ordena o vetor pelo impacto de cada Node para o cluster i
+          std::sort(impacts.begin(), impacts.end(), [](Impact& impact1, Impact& impact2) {
+            return impact1.impact > impact2.impact;
+          });
+        }
+        tNodes = (int)((viz.size() - 1) * alpha) != 0 ? (int)((viz.size() - 1) * alpha) : 1;
+        int select = rand() % tNodes;
+        if(viz[impacts[select].id]->getWeight() + clusters[i].currentWeight > clusters[i].upperLimit) continue;
+        clusters[i].ids.push_back(viz[impacts[select].id]->id);
+        clusters[i].currentWeight += viz[impacts[select].id]->getWeight();
+        viz.erase(std::remove(viz.begin(), viz.end(), viz[impacts[select].id]), viz.end());
       }
     }
     constructClusterSet();
     return getClusteringInfo();
   }
 
+  /**
+   * @brief Função para atualizar as médias das soluções
+   * 
+   * @param medians 
+   * @param solution 
+   * @param alphas 
+   * @param sums 
+   * @param alpha 
+   * @param solutionsAmount 
+   */
   void Graph::updateMedians(
     std::vector<float>& medians,
     float solution,
@@ -602,6 +694,14 @@ namespace Graph {
     medians[index] = sums[index] / solutionsAmount[index];
   }
 
+  /**
+   * @brief Função para instanciar os vetores de médias e probabilidades para o Guloso
+   * randomizado reativo adaptativo
+   * 
+   * @param medians 
+   * @param prob 
+   * @param size 
+   */
   void Graph::instanceVectors(std::vector<float>& medians, std::vector<float>& prob, int size) {
     float baseProbability = 1.0f / size;
     float baseMedian = 1.0f;
@@ -611,6 +711,41 @@ namespace Graph {
     }
   }
 
+  /**
+   * @brief Função para gerar a representação em string dos resultados para determinado alfa
+   * 
+   * @param result 
+   * @param alpha 
+   * @return std::string 
+   */
+  std::string Graph::getClustersStateInStringFormat(float result, float alpha) {
+    std::string data;
+    data.append("Melhor resultado: ");
+    data.append(std::to_string(result));
+    data.append("\nAlfa: ");
+    data.append(std::to_string(alpha));
+    int ind = 1;
+    for(Cluster cluster : clusters) {
+      data.append("\nVertices no cluster ");
+      data.append(std::to_string(ind));
+      data.append("\n");
+      for(int ids : cluster.ids) {
+        data.append("  ->");
+        data.append(std::to_string(ids));
+        data.append("\n");
+      }
+      data.append("\n");
+      ind++;
+    }
+    return data;
+  }
+
+  /**
+   * @brief Seleciona um alfa baseado nas probabilidades de cada um deles
+   * 
+   * @param prob 
+   * @return int 
+   */
   int Graph::selectProbabilities(std::vector<float>& prob) {
     std::vector<int> indexes;
     for(int i = 0; i < prob.size(); i++) {
@@ -622,6 +757,14 @@ namespace Graph {
     return indexes[random];
   }
 
+  /**
+   * @brief Atualiza as probabilidades
+   * 
+   * @param median 
+   * @param probabilities 
+   * @param bestSolutions 
+   * @param q 
+   */
   void Graph::updateProbabilities(
     std::vector<float>& median, 
     std::vector<float>& probabilities,
@@ -648,9 +791,15 @@ namespace Graph {
     });
   }
 
-  float Graph::getClusteringInfo() {
+  /**
+   * @brief Função para pegar a informação dos clusters (Qualidade da solução e desvio padrão)
+   * 
+   * @param printClusters 
+   * @return float 
+   */
+  float Graph::getClusteringInfo(bool printClusters) {
     float variation = 0;
-    float totalWeight = 0;
+    float totalWeight = 0.0f;
     float median = 0;
     int ind = 1;
     for(Cluster cluster: clusters) {
@@ -664,19 +813,40 @@ namespace Graph {
     }
     variation /= (clusters.size() - 1);
     float standardDeviation = sqrt(variation);
-    std::cout << "Desvio padrao: " << standardDeviation << std::endl;
+    std::cout << std::endl << "Desvio padrao: " << standardDeviation << std::endl;
+    if(printClusters) {
+      printClustersInfo();
+    }
     return totalWeight;
   }
 
+  void Graph::printClustersInfo() {
+    int ind = 1;
+    for(Cluster cluster : clusters) {
+      std::cout << "Vertexes in cluster " << ind << std::endl;
+      for(int ids : cluster.ids) {
+        std::cout << "  " << "->" << ids << std::endl;
+      }
+      std::cout << std::endl;
+      ind++;
+    }
+  }
 
+
+  /**
+   * @brief Função para calcular o peso total de cada cluster
+   * 
+   */
   void Graph::constructClusterSet() {
     std::vector<int> reference;
     int index = 0;
     for(Cluster cluster : clusters) {
       cluster.totalWeight = 0;
+      //Vetor de referências
       reference = cluster.ids;
       for(int id : cluster.ids) {
         Node* p = searchById(id);
+        //Remove o item do vetor de referências ( para ele não ser contabilizado 2 vezes)
         reference.erase(std::remove(reference.begin(), reference.end(), id), reference.end());
         for(int toId : reference) {
           Edge* temp = p->searchEdge(toId);
