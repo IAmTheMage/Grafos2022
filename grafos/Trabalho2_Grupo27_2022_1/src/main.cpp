@@ -109,49 +109,7 @@ int main(int argc, char** argv) {
     case 12:
       graph->randomReactiveGreedy();
       break;
-    
     default:
-      std::vector<float> alp;
-
-
-      alp.push_back(0.05);
-      alp.push_back(0.07);
-      alp.push_back(0.13);
-      alp.push_back(0.15);
-      alp.push_back(0.21);
-      alp.push_back(0.47);
-      alp.push_back(0.48);
-      alp.push_back(0.49);
-      alp.push_back(0.51);
-      alp.push_back(0.22);
-      alp.push_back(0.27);
-      alp.push_back(0.18);
-      alp.push_back(0.28);
-      alp.push_back(0.34);
-      alp.push_back(0.39);
-      alp.push_back(0.78);
-      alp.push_back(0.42);
-      alp.push_back(0.09);
-      alp.push_back(0.57);
-      alp.push_back(0.81);
-      std::ofstream off("experimento.txt", std::ios::trunc | std::ios::out);
-      for(float b : alp) {
-        std::cout << b << std::endl;
-        Utils::PerformanceMetrics* performance = new Utils::PerformanceMetrics();
-        performance->setupTestSuit("Greedy Random");
-        performance->startClock();
-        
-        float sum = 0.0f;
-        for(int i = 0; i < 500; i++) {
-          sum += graph->generateSolution(b);
-          graph->cleanVisited();
-          graph->cleanClusters();
-        }
-        float time = performance->_end();
-        off << " A média das soluções para o alfa: " << b << " e: " << sum / 500 << " tempo medio: " << time / 500 << std::endl; 
-        
-      }
-      off.close();
       break;
   }
 

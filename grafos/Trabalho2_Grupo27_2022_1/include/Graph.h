@@ -188,7 +188,6 @@ namespace Graph {
       void greedyResult();
       float greedy();
       void randomGreedy();
-      float randomGreedy(float alph);
       void randomReactiveGreedy();
 
       float generateSolution(float alpha);

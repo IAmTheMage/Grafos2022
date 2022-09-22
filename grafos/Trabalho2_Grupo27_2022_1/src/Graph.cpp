@@ -536,19 +536,6 @@ namespace Graph {
     std::cout << std::endl << "Saida em " << outputFilePath << std::endl;
   }
 
-  float Graph::randomGreedy(float alph) {
-    int tNodes;
-    float alpha = alph;
-    float solution = this->generateSolution(alpha);
-    if(solution == 1.0f) {
-      std::cout << "Esse alpha nao possui solucao" << std::endl;
-      return solution;
-    }
-    std::cout << "Resultado para Guloso randomizado: " << solution << std::endl;
-    std::string resultStr = getClustersStateInStringFormat(solution, alpha);
-    return solution;
-  }
-
   /**
    * @brief Guloso randomizado reativo adaptativo
    * 
